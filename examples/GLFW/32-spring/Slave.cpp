@@ -44,7 +44,10 @@ void Slave::spin()
 	case ControlAlgorithm::WAVE:
 		msgS2M.force = m_wave.calculateVs(m_vel, springForce);
 		break;
+	case ControlAlgorithm::PassivityControl:
+		msgS2M.force = m_passivityControl.calculateForce(springForce, m_vel);
 	}
+	// TODO: do we need to save the transformed forces as previous force?
 	m_prevForce = springForce;
 
 	if (!m_packetRateLimiter.limited())

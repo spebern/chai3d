@@ -7,6 +7,7 @@
 #include "PDController.h"
 #include "Config.h"
 #include "WAVE.h"
+#include "PassivityControl.h"
 
 using namespace chai3d;
 
@@ -33,6 +34,7 @@ private:
 	cVector3d m_prevForce;
 
 	WAVE m_wave;
+	PassivityControl m_passivityControl;
 public:
 	Slave(Network* network, Spring* spring, Config* config)
 		: m_network(network)

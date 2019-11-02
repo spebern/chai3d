@@ -12,11 +12,12 @@ void Master::spin()
 
 	switch (m_config->controlAlgorithm())
 	{
-	case ControlAlgorithm::None:
-		msgM2S.vel = vel;
-		break;
 	case ControlAlgorithm::WAVE:
 		msgM2S.vel = m_wave.calculateUm(vel, m_previousForce);
+		break;
+	default:
+		msgM2S.vel = vel;
+		break;
 	}
 
 	if (!m_packetRateLimiter.limited())
@@ -29,11 +30,11 @@ void Master::spin()
 	{
 		switch (m_config->controlAlgorithm())
 		{
-		case ControlAlgorithm::None:
-			force = msgS2M.force;
-			break;
 		case ControlAlgorithm::WAVE:
 			force = m_wave.calculateFm(vel, msgS2M.force);
+			break;
+		default:
+			force = msgS2M.force;
 			break;
 		}
 		force = limitForce(force);
