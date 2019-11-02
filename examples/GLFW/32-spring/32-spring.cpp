@@ -5,7 +5,7 @@
 #include "Master.h"
 #include "Slave.h"
 #include "chrono"
-#include "Common.h"
+#include "Config.h"
 
 using namespace chai3d;
 using namespace std;
@@ -32,6 +32,11 @@ bool mirroredDisplay = false;
 //------------------------------------------------------------------------------
 // DECLARED VARIABLES
 //------------------------------------------------------------------------------
+
+#define KEY_DOWN  264
+#define KEY_UP    265
+#define KEY_LEFT  263
+#define KEY_RIGHT 262
 
 // a world that contains all objects of the virtual environment
 cWorld* world;
@@ -65,6 +70,9 @@ Spring* spring;
 
 // the network model used for passing messages between master and slave
 Network* network;
+
+// the configuration of master and slave (e.g. control algorithm)
+Config* config;
 
 // a wall that fixes the spring
 cMesh* wall;
@@ -246,9 +254,10 @@ int main(int argc, char* argv[])
 
 	std::chrono::microseconds delay(0);
 	std::chrono::microseconds varDelay(0);
+	config = new Config();
 	network = new Network(delay, varDelay);
-	master = new Master(network, hapticDevice);
-	slave = new Slave(network, spring);
+	master = new Master(network, hapticDevice, config);
+	slave = new Slave(network, spring, config);
 
 	// create a thread which starts the main haptics rendering loop
 	hapticsThread = new cThread();

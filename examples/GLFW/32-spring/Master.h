@@ -3,6 +3,7 @@
 #include "chai3d.h"
 #include "Network.h"
 #include "RateLimiter.h"
+#include "Config.h"
 
 using namespace std;
 using namespace chai3d;
@@ -15,11 +16,13 @@ private:
 	cGenericHapticDevicePtr m_hapticDevice;
 	cVector3d m_previousForce;
 	int64_t m_sequenceNumber = 0;
+	Config* m_config;
 public:
-	Master(Network* network, const cGenericHapticDevicePtr hapticDevice)
+	Master(Network* network, const cGenericHapticDevicePtr hapticDevice, Config* config)
 		: m_network(network)
 		, m_hapticDevice(hapticDevice)
 		, m_previousForce(0, 0, 0)
+		, m_config(config)
 	{
 	}
 

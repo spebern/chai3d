@@ -1,5 +1,5 @@
 #include "Slave.h"
-#include "Common.h"
+#include "Config.h"
 
 void Slave::spin()
 {

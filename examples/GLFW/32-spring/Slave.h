@@ -5,6 +5,7 @@
 #include "Spring.h"
 #include "RateLimiter.h"
 #include "PDController.h"
+#include "Config.h"
 
 using namespace chai3d;
 
@@ -15,6 +16,7 @@ private:
 	Spring* m_spring;
 	PDController m_pdController;
 	RateLimiter m_packetRateLimiter;
+	Config* m_config;
 
 	double m_mass = 0.1; // [g]
 	double m_damping = 0.04;
@@ -30,14 +32,15 @@ private:
 	cVector3d m_force;
 
 public:
-	Slave(Network* network, Spring* spring)
+	Slave(Network* network, Spring* spring, Config* config)
 		: m_network(network)
-		  , m_spring(spring)
-		  , m_posRef(0, 0, 0)
-		  , m_pos(0, 0, 0)
-		  , m_velRef(0, 0, 0)
-		  , m_vel(0, 0, 0)
-		  , m_force(0, 0, 0)
+		, m_spring(spring)
+		, m_config(config)
+		, m_posRef(0, 0, 0)
+		, m_pos(0, 0, 0)
+		, m_velRef(0, 0, 0)
+		, m_vel(0, 0, 0)
+		, m_force(0, 0, 0)
 	{
 	}
 
