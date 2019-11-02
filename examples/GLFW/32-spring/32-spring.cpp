@@ -89,13 +89,13 @@ int swapInterval = 1;
 //------------------------------------------------------------------------------
 
 // callback when the window display is resized
-void windowSizeCallback(GLFWwindow* a_window, int a_width, int a_height);
+void windowSizeCallback(GLFWwindow* window, int width, int height);
 
 // callback when an error GLFW occurs
-void errorCallback(int error, const char* a_description);
+void errorCallback(int error, const char* description);
 
 // callback when a key is pressed
-void keyCallback(GLFWwindow* a_window, int a_key, int a_scancode, int a_action, int a_mods);
+void keyCallback(GLFWwindow* window, int key, int scancode, int action, int mods);
 
 // this function renders the scene
 void updateGraphics();
@@ -276,10 +276,10 @@ int main(int argc, char* argv[])
 	return 0;
 }
 
-void windowSizeCallback(GLFWwindow* window, const int newWidth, int a_height)
+void windowSizeCallback(GLFWwindow* window, const int newWidth, int newHeight)
 {
 	width = newWidth;
-	height = a_height;
+	height = newHeight;
 }
 
 void errorCallback(int error, const char* description)
