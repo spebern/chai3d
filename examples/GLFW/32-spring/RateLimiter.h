@@ -1,18 +1,16 @@
-#ifndef RATELIMITER_H
-#define RATELIMITER_H
+#pragma once
 
-#include <chrono>
+#include "chrono"
 
 using namespace std;
 
-class RateLimiter {
+class RateLimiter
+{
 private:
-	chrono::high_resolution_clock::time_point last_;
-	double tokens_;
-	double rate_;
+	chrono::high_resolution_clock::time_point m_last;
+	double m_tokens;
+	double m_rate;
 public:
-	explicit RateLimiter(double rate);
+	explicit RateLimiter(double rate = 1000.0): m_tokens(rate), m_rate(rate) {}
 	bool limited();
 };
-
-#endif

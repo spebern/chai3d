@@ -1,23 +1,18 @@
 #include "RateLimiter.h"
-#include <chrono>
 
-RateLimiter::RateLimiter(const double rate) {
-	rate_ = rate;
-	tokens_ = rate;
-	last_ = chrono::high_resolution_clock::now();
-}
-
-bool RateLimiter::limited() {
+bool RateLimiter::limited()
+{
 	const auto now = chrono::high_resolution_clock::now();
-	const auto lapse = chrono::duration_cast<std::chrono::microseconds>(now - last_).count();
-	last_ = now;
-	tokens_ += double(lapse / 1e-6) * rate_;
+	const auto lapse = chrono::duration_cast<std::chrono::microseconds>(now - m_last).count();
+	m_last = now;
+	m_tokens += double(lapse / 1e-6) * m_rate;
 
-	if (tokens_ > rate_)
-		tokens_ = rate_;
+	if (m_tokens > m_rate)
+		m_tokens = m_rate;
 
-	if (tokens_ >= 1.0) {
-		tokens_ -= 1.0;
+	if (m_tokens >= 1.0)
+	{
+		m_tokens -= 1.0;
 		return false;
 	}
 	return true;
