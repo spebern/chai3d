@@ -31,4 +31,24 @@ public:
 	{
 		return force.length() > 5.0 ? force / force.length() * 5.0 : force;
 	}
+
+	void packetRate(const double rate)
+	{
+		m_packetRateLimiter.rate(rate);
+	}
+
+	double packetRate() const
+	{
+		return m_packetRateLimiter.rate();
+	}
+
+	void increasePacketRate(const double dRate)
+	{
+		m_packetRateLimiter.increaseRate(dRate);
+	}
+
+	void decreasePacketRate(const double dRate)
+	{
+		m_packetRateLimiter.decreaseRate(dRate);
+	}
 };

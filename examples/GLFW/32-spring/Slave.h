@@ -42,4 +42,25 @@ public:
 	}
 
 	void spin();
+
+	void packetRate(const double rate)
+	{
+		m_packetRateLimiter.rate(rate);
+	}
+
+	double packetRate() const
+	{
+		return m_packetRateLimiter.rate();
+	}
+
+	void increasePacketRate(const double dRate)
+	{
+		m_packetRateLimiter.increaseRate(dRate);
+	}
+
+	void decreasePacketRate(const double dRate)
+	{
+		m_packetRateLimiter.decreaseRate(dRate);
+	}
+
 };

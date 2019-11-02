@@ -293,10 +293,12 @@ void keyCallback(GLFWwindow* window, int key, int scancode, int action, int mods
 	switch (key)
 	{
 	case KEY_DOWN:
-		std::cout << "down" << std::endl;
+		master->decreasePacketRate(10.0);
+		slave->decreasePacketRate(10.0);
 		break;
 	case KEY_UP:
-		std::cout << "up" << std::endl;
+		master->increasePacketRate(10.0);
+		slave->increasePacketRate(10.0);
 		break;
 	case KEY_LEFT:
 		network->decreaseDelay(chrono::microseconds(1000));
