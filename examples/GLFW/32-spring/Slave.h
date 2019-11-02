@@ -6,6 +6,7 @@
 #include "RateLimiter.h"
 #include "PDController.h"
 #include "Config.h"
+#include "WAVE.h"
 
 using namespace chai3d;
 
@@ -29,8 +30,9 @@ private:
 	cVector3d m_velRef;
 	cVector3d m_vel;
 
-	cVector3d m_force;
+	cVector3d m_prevForce;
 
+	WAVE m_wave;
 public:
 	Slave(Network* network, Spring* spring, Config* config)
 		: m_network(network)
@@ -40,7 +42,7 @@ public:
 		, m_pos(0, 0, 0)
 		, m_velRef(0, 0, 0)
 		, m_vel(0, 0, 0)
-		, m_force(0, 0, 0)
+		, m_prevForce(0, 0, 0)
 	{
 	}
 

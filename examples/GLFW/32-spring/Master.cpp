@@ -7,19 +7,38 @@ void Master::spin()
 
 	HapticMessageM2S msgM2S;
 	msgM2S.sequenceNumber = m_sequenceNumber;
-	msgM2S.pos = pos;
-	msgM2S.vel = vel;
 	m_sequenceNumber++;
+	msgM2S.pos = pos;
+
+	switch (m_config->controlAlgorithm())
+	{
+	case ControlAlgorithm::None:
+		msgM2S.vel = vel;
+		break;
+	case ControlAlgorithm::WAVE:
+		msgM2S.vel = m_wave.calculateUm(vel, m_previousForce);
+	}
 
 	if (!m_packetRateLimiter.limited())
 		m_network->sendM2S(msgM2S);
 
 	HapticMessageS2M msgS2M;
 	const auto receivedNewMessage = m_network->tryReceiveS2M(msgS2M);
+	cVector3d force;
 	if (receivedNewMessage)
 	{
-		m_previousForce = limitForce(msgS2M.force);
-		m_hapticDevice->setForce(m_previousForce);
+		switch (m_config->controlAlgorithm())
+		{
+		case ControlAlgorithm::None:
+			force = msgS2M.force;
+			break;
+		case ControlAlgorithm::WAVE:
+			force = m_wave.calculateFm(vel, msgS2M.force);
+			break;
+		}
+		force = limitForce(force);
+		m_hapticDevice->setForce(force);
+		m_previousForce = force;
 	}
 	else
 	{

@@ -4,6 +4,7 @@
 #include "Network.h"
 #include "RateLimiter.h"
 #include "Config.h"
+#include "WAVE.h"
 
 using namespace std;
 using namespace chai3d;
@@ -17,6 +18,8 @@ private:
 	cVector3d m_previousForce;
 	int64_t m_sequenceNumber = 0;
 	Config* m_config;
+
+	WAVE m_wave;
 public:
 	Master(Network* network, const cGenericHapticDevicePtr hapticDevice, Config* config)
 		: m_network(network)

@@ -10,13 +10,21 @@ void Slave::spin()
 	if (receivedNewMsg)
 	{
 		m_posRef = msgM2S.pos;
-		m_velRef = msgM2S.vel;
+		switch (m_config->controlAlgorithm())
+		{
+		case ControlAlgorithm::None:
+			m_velRef = msgM2S.vel;
+			break;
+		case ControlAlgorithm::WAVE:
+			m_velRef = m_wave.calculateVelS(msgM2S.vel, m_prevForce);
+			break;
+		}
 	}
 	else
 		m_posRef = m_posRef + m_velRef * DT;
 
 	auto const pdForce = m_pdController.calculateForce(m_posRef, m_pos, m_velRef, m_vel);
-	auto const springForce = m_spring->updatePositionAndCalculateForce(m_pos, m_vel);
+	auto springForce = m_spring->updatePositionAndCalculateForce(m_pos, m_vel);
 
 	auto const totalForce = pdForce + springForce;
 
@@ -27,7 +35,17 @@ void Slave::spin()
 	HapticMessageS2M msgS2M;
 	msgS2M.sequenceNumber = m_sequenceNumber;
 	m_sequenceNumber++;
-	msgS2M.force = springForce;
+
+	switch (m_config->controlAlgorithm())
+	{
+	case ControlAlgorithm::None:
+		msgS2M.force = springForce;
+		break;
+	case ControlAlgorithm::WAVE:
+		msgS2M.force = m_wave.calculateVs(m_vel, springForce);
+		break;
+	}
+	m_prevForce = springForce;
 
 	if (!m_packetRateLimiter.limited())
 		m_network->sendS2M(msgS2M);
