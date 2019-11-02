@@ -63,4 +63,24 @@ public:
 		m_channelM2S.clear();
 		m_channelS2M.clear();
 	}
+
+	void increaseDelay(chrono::microseconds dDelay)
+	{
+		m_delay = min(chrono::microseconds(200000), m_delay + dDelay);
+	}
+
+	void decreaseDelay(chrono::microseconds dDelay)
+	{
+		m_delay = max(chrono::microseconds(0), m_delay - dDelay);
+	}
+
+	void delay(chrono::microseconds delay)
+	{
+		m_delay = delay;
+	}
+
+	chrono::microseconds delay() const
+	{
+		return m_delay;
+	}
 };

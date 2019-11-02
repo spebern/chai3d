@@ -5,6 +5,7 @@
 #include "Master.h"
 #include "Slave.h"
 #include "chrono"
+#include "Common.h"
 
 using namespace chai3d;
 using namespace std;
@@ -289,6 +290,22 @@ void errorCallback(int error, const char* description)
 
 void keyCallback(GLFWwindow* window, int key, int scancode, int action, int mods)
 {
+	switch (key)
+	{
+	case KEY_DOWN:
+		std::cout << "down" << std::endl;
+		break;
+	case KEY_UP:
+		std::cout << "up" << std::endl;
+		break;
+	case KEY_LEFT:
+		network->decreaseDelay(chrono::microseconds(1000));
+		break;
+	case KEY_RIGHT:
+		network->increaseDelay(chrono::microseconds(1000));
+		break;
+	default: ;
+	}
 }
 
 void close(void)
