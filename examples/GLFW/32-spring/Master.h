@@ -5,6 +5,7 @@
 #include "RateLimiter.h"
 #include "Config.h"
 #include "WAVE.h"
+#include "ISS.h"
 
 using namespace std;
 using namespace chai3d;
@@ -15,17 +16,21 @@ private:
 	RateLimiter m_packetRateLimiter;
 	Network* m_network;
 	cGenericHapticDevicePtr m_hapticDevice;
-	cVector3d m_previousForce;
 	int64_t m_sequenceNumber = 0;
 	Config* m_config;
 
+	cVector3d m_prevPos;
+	cVector3d m_prevForce;
+
 	WAVE m_wave;
+	ISS m_iss;
 public:
 	Master(Network* network, const cGenericHapticDevicePtr hapticDevice, Config* config)
 		: m_network(network)
 		, m_hapticDevice(hapticDevice)
-		, m_previousForce(0, 0, 0)
 		, m_config(config)
+		, m_prevPos(0, 0, 0)
+		, m_prevForce(0, 0, 0)
 	{
 	}
 

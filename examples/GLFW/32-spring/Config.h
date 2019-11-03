@@ -6,7 +6,8 @@ enum class ControlAlgorithm
 {
 	None,
 	WAVE,
-	PassivityControl
+	PassivityControl,
+	ISS
 };
 
 class Config

@@ -2,18 +2,19 @@
 
 void Master::spin()
 {
+	auto const controlAlgorithm = m_config->controlAlgorithm();
 	cVector3d pos, vel;
 	sample(pos, vel);
 
 	HapticMessageM2S msgM2S;
 	msgM2S.sequenceNumber = m_sequenceNumber;
 	m_sequenceNumber++;
-	msgM2S.pos = pos;
 
-	switch (m_config->controlAlgorithm())
+	msgM2S.pos = pos;
+	switch (controlAlgorithm)
 	{
 	case ControlAlgorithm::WAVE:
-		msgM2S.vel = m_wave.calculateUm(vel, m_previousForce);
+		msgM2S.vel = m_wave.calculateUm(vel, m_prevForce);
 		break;
 	default:
 		msgM2S.vel = vel;
@@ -28,7 +29,7 @@ void Master::spin()
 	cVector3d force;
 	if (receivedNewMessage)
 	{
-		switch (m_config->controlAlgorithm())
+		switch (controlAlgorithm)
 		{
 		case ControlAlgorithm::WAVE:
 			force = m_wave.calculateFm(vel, msgS2M.force);
@@ -39,11 +40,11 @@ void Master::spin()
 		}
 		force = limitForce(force);
 		m_hapticDevice->setForce(force);
-		m_previousForce = force;
+		m_prevForce = force;
 	}
 	else
 	{
-		m_hapticDevice->setForce(m_previousForce);
+		m_hapticDevice->setForce(m_prevForce);
 	}
 }
 
