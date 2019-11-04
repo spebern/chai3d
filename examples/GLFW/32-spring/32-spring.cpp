@@ -6,6 +6,7 @@
 #include "Slave.h"
 #include "chrono"
 #include "Config.h"
+#include "array"
 
 using namespace chai3d;
 using namespace std;
@@ -65,8 +66,8 @@ cThread* hapticsThread;
 // a handle to window display context
 GLFWwindow* window = nullptr;
 
-// a spring the haptic device interacts with
-Spring* spring;
+// springs the haptic device interacts with
+array<Spring*, 4> springs;
 
 // the network model used for passing messages between master and slave
 Network* network;
@@ -114,8 +115,6 @@ void updateHaptics();
 
 // this function closes the application
 void close();
-
-cMesh* createSpringMesh(double size, double height);
 
 cMesh* createWall();
 
@@ -219,9 +218,13 @@ void initWorld()
 
 	light->setDir(-1.0, 0.0, 0.0);
 
-	cMesh* springMesh = createSpringMesh(0.05, 0.085);
-	world->addChild(springMesh);
-	spring = new Spring(springMesh);
+	cVector3d springPos(0, 0, 0.15);
+	for (auto& spring : springs)
+	{
+		spring = new Spring(springPos);
+		world->addChild(spring->animation());
+		springPos.z(springPos.z() - 0.1);
+	}
 
 	wall = createWall();
 	world->addChild(wall);
@@ -252,12 +255,13 @@ int main(int argc, char* argv[])
 
 	initWorld();
 
-	std::chrono::microseconds delay(0);
-	std::chrono::microseconds varDelay(0);
+	const std::chrono::microseconds delay(0);
+	const std::chrono::microseconds varDelay(0);
 	config = new Config();
+	config->controlAlgorithm(ControlAlgorithm::PassivityControl);
 	network = new Network(delay, varDelay);
 	master = new Master(network, hapticDevice, config);
-	slave = new Slave(network, spring, config);
+	slave = new Slave(network, springs, config);
 
 	// create a thread which starts the main haptics rendering loop
 	hapticsThread = new cThread();
@@ -302,12 +306,10 @@ void keyCallback(GLFWwindow* window, int key, int scancode, int action, int mods
 	switch (key)
 	{
 	case KEY_DOWN:
-		master->decreasePacketRate(10.0);
-		slave->decreasePacketRate(10.0);
+		slave->nextSpring();
 		break;
 	case KEY_UP:
-		master->increasePacketRate(10.0);
-		slave->increasePacketRate(10.0);
+		slave->prevSpring();
 		break;
 	case KEY_LEFT:
 		network->decreaseDelay(chrono::microseconds(1000));
@@ -333,69 +335,6 @@ void close(void)
 	delete hapticsThread;
 	delete world;
 	delete handler;
-}
-
-cMesh* createSpringMesh(const double size, const double height)
-{
-	auto mesh = new cMesh();
-	const auto base = 0.0;
-	const auto halfSize = size / 2.0;
-	int vertices[6][6];
-
-	// face -x
-	vertices[0][0] = mesh->newVertex(-halfSize, base, halfSize);
-	vertices[0][1] = mesh->newVertex(-halfSize, base, -halfSize);
-	vertices[0][2] = mesh->newVertex(-halfSize, -height, -halfSize);
-	vertices[0][3] = mesh->newVertex(-halfSize, -height, halfSize);
-
-	// face +x
-	vertices[1][0] = mesh->newVertex(halfSize, base, -halfSize);
-	vertices[1][1] = mesh->newVertex(halfSize, base, halfSize);
-	vertices[1][2] = mesh->newVertex(halfSize, -height, halfSize);
-	vertices[1][3] = mesh->newVertex(halfSize, -height, -halfSize);
-
-	// face -y
-	vertices[2][0] = mesh->newVertex(-halfSize, -height, halfSize);
-	vertices[2][1] = mesh->newVertex(-halfSize, -height, -halfSize);
-	vertices[2][2] = mesh->newVertex(halfSize, -height, -halfSize);
-	vertices[2][3] = mesh->newVertex(halfSize, -height, halfSize);
-
-	// face +y
-	vertices[3][0] = mesh->newVertex(halfSize, base, halfSize);
-	vertices[3][1] = mesh->newVertex(halfSize, base, -halfSize);
-	vertices[3][2] = mesh->newVertex(-halfSize, base, halfSize);
-	vertices[3][3] = mesh->newVertex(-halfSize, base, -halfSize);
-
-	// face -z
-	vertices[4][0] = mesh->newVertex(halfSize, base, -halfSize);
-	vertices[4][1] = mesh->newVertex(-halfSize, base, -halfSize);
-	vertices[4][2] = mesh->newVertex(halfSize, -height, -halfSize);
-	vertices[4][3] = mesh->newVertex(-halfSize, -height, -halfSize);
-
-	// face +z
-	vertices[5][0] = mesh->newVertex(halfSize, base, halfSize);
-	vertices[5][1] = mesh->newVertex(-halfSize, base, halfSize);
-	vertices[5][2] = mesh->newVertex(halfSize, -height, halfSize);
-	vertices[5][3] = mesh->newVertex(-halfSize, -height, halfSize);
-
-	// create triangles
-	for (auto& v : vertices)
-	{
-		mesh->newTriangle(v[0], v[1], v[2]);
-		mesh->newTriangle(v[0], v[2], v[3]);
-	}
-
-	mesh->m_material->m_ambient.set(0.5, 0.5, 0.5, 1.0);
-	mesh->m_material->m_diffuse.set(0.7, 0.7, 0.7, 1.0);
-	mesh->m_material->m_specular.set(1.0, 1.0, 1.0, 1.0);
-	mesh->m_material->m_emission.set(0.0, 0.0, 0.0, 1.0);
-	mesh->m_material->setStiffness(50);
-	mesh->m_material->setDynamicFriction(0.8);
-	mesh->m_material->setStaticFriction(0.8);
-
-	mesh->setLocalPos(0, 0, 0);
-
-	return mesh;
 }
 
 cMesh* createWall()

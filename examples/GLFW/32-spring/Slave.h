@@ -9,6 +9,7 @@
 #include "WAVE.h"
 #include "PassivityControl.h"
 #include "ISS.h"
+#include "array"
 
 using namespace chai3d;
 
@@ -16,7 +17,7 @@ class Slave
 {
 private:
 	Network* m_network;
-	Spring* m_spring;
+	array<Spring*, 4> m_springs;
 	PDController m_pdController;
 	RateLimiter m_packetRateLimiter;
 	Config* m_config;
@@ -37,13 +38,15 @@ private:
 	cVector3d m_prevForce;
 	cVector3d m_force;
 
+	uint64_t m_currentSpringIndex;
+
 	WAVE m_wave;
 	PassivityControl m_passivityControl;
 	ISS m_iss;
 public:
-	Slave(Network* network, Spring* spring, Config* config)
+	Slave(Network* network, array<Spring*, 4> springs, Config* config)
 		: m_network(network)
-		, m_spring(spring)
+		, m_springs(springs)
 		, m_config(config)
 		, m_posRef(0, 0, 0)
 		, m_pos(0, 0, 0)
@@ -53,6 +56,7 @@ public:
 		, m_prevVel(0, 0, 0)
 		, m_prevForce(0, 0, 0)
 		, m_force(0, 0, 0)
+		, m_currentSpringIndex(0)
 	{
 	}
 
@@ -91,5 +95,32 @@ public:
 	cVector3d dPos() const
 	{
 		return (m_pos - m_prevPos) / DT;
+	}
+
+	Spring* currentSpring()
+	{
+		return m_springs[m_currentSpringIndex];
+	}
+
+	bool nextSpring()
+	{
+		if (currentSpring()->indented())
+			return false;
+		if (m_currentSpringIndex == m_springs.size() - 1)
+			m_currentSpringIndex = 0;
+		else
+			m_currentSpringIndex++;
+		return true;
+	}
+
+	bool prevSpring()
+	{
+		if (currentSpring()->indented())
+			return false;
+		if (m_currentSpringIndex == 0)
+			m_currentSpringIndex = m_springs.size() - 1;
+		else
+			m_currentSpringIndex--;
+		return true;
 	}
 };
