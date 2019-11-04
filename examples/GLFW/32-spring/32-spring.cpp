@@ -303,6 +303,9 @@ void errorCallback(int error, const char* description)
 
 void keyCallback(GLFWwindow* window, int key, int scancode, int action, int mods)
 {
+    if ((action != GLFW_PRESS) && (action != GLFW_REPEAT))
+        return;
+
 	switch (key)
 	{
 	case KEY_DOWN:
