@@ -31,6 +31,8 @@ void Slave::spin()
 
 	auto springForce = currentSpring()->updatePositionAndCalculateForce(m_pos, m_vel);
 
+	updateToolTipPos();
+
 	auto const totalForce = pdForce + springForce;
 
 	auto const acceleration = (totalForce - m_mass * m_vel) / m_damping;

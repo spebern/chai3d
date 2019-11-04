@@ -10,11 +10,12 @@ class Spring
 private:
 	double m_k;
 	double m_length;
+	double m_width;
 	cShapeBox* m_animation;
 public:
-	explicit Spring(const cVector3d pos): m_k(200.0), m_length(0.2), m_animation(nullptr)
+	explicit Spring(const cVector3d pos): m_k(200.0), m_length(0.2), m_width(0.05), m_animation(nullptr)
 	{
-		m_animation = new cShapeBox(0, m_length, 0.05);
+		m_animation = new cShapeBox(0, m_length, m_width);
 		m_animation->setLocalPos(pos);
 	}
 
@@ -48,5 +49,20 @@ public:
 	bool indented() const
 	{
 		return !m_animation->getLocalPos().y() == 0.0;
+	}
+
+	cVector3d pos() const
+	{
+		return m_animation->getLocalPos();
+	}
+
+	double length() const
+	{
+		return m_length;
+	}
+
+	double width() const
+	{
+		return m_width;
 	}
 };

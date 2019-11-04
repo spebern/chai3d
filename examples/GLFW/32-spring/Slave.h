@@ -10,6 +10,7 @@
 #include "PassivityControl.h"
 #include "ISS.h"
 #include "array"
+#include "ToolTip.h"
 
 using namespace chai3d;
 
@@ -40,11 +41,13 @@ private:
 
 	uint64_t m_currentSpringIndex;
 
+	ToolTip* m_toolTip;
+
 	WAVE m_wave;
 	PassivityControl m_passivityControl;
 	ISS m_iss;
 public:
-	Slave(Network* network, array<Spring*, 4> springs, Config* config)
+	Slave(Network* network, array<Spring*, 4> springs, Config* config, ToolTip* toolTip)
 		: m_network(network)
 		, m_springs(springs)
 		, m_config(config)
@@ -57,6 +60,7 @@ public:
 		, m_prevForce(0, 0, 0)
 		, m_force(0, 0, 0)
 		, m_currentSpringIndex(0)
+		, m_toolTip(toolTip)
 	{
 	}
 
@@ -100,6 +104,16 @@ public:
 	Spring* currentSpring()
 	{
 		return m_springs[m_currentSpringIndex];
+	}
+
+	void updateToolTipPos()
+	{
+		const auto spring = currentSpring();
+		auto const springPos = spring->pos();
+		const auto width = spring->width();
+		const auto length = spring->length();
+		cVector3d newPos(0, m_pos.y() - length / 2 - m_toolTip->radius(), springPos.z());
+		m_toolTip->pos(newPos);
 	}
 
 	bool nextSpring()

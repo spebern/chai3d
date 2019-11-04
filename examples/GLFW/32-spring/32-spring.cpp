@@ -7,6 +7,7 @@
 #include "chrono"
 #include "Config.h"
 #include "array"
+#include "ToolTip.h"
 
 using namespace chai3d;
 using namespace std;
@@ -68,6 +69,9 @@ GLFWwindow* window = nullptr;
 
 // springs the haptic device interacts with
 array<Spring*, 4> springs;
+
+// position of the device on the slave side
+ToolTip* toolTip;
 
 // the network model used for passing messages between master and slave
 Network* network;
@@ -219,16 +223,19 @@ void initWorld()
 	light->setDir(-1.0, 0.0, 0.0);
 
 	cVector3d springPos(0, 0, 0.15);
-	for (auto& spring : springs)
+	for (auto i = 0; i < 4; i++)
 	{
-		spring = new Spring(springPos);
-		world->addChild(spring->animation());
+		springs[i] = new Spring(springPos);
+		world->addChild(springs[i]->animation());
 		springPos.z(springPos.z() - 0.1);
 	}
 
 	wall = createWall();
 	world->addChild(wall);
 	wall->setLocalPos(0, 0, 0);
+
+	toolTip = new ToolTip();
+	world->addChild(toolTip->animation());
 }
 
 int main(int argc, char* argv[])
@@ -261,7 +268,7 @@ int main(int argc, char* argv[])
 	config->controlAlgorithm(ControlAlgorithm::PassivityControl);
 	network = new Network(delay, varDelay);
 	master = new Master(network, hapticDevice, config);
-	slave = new Slave(network, springs, config);
+	slave = new Slave(network, springs, config, toolTip);
 
 	// create a thread which starts the main haptics rendering loop
 	hapticsThread = new cThread();
