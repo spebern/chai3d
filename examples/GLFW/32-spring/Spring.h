@@ -35,7 +35,6 @@ public:
 			return cVector3d(0, 0, 0);
 		}
 		newPos.y(indention);
-		std::cout << newPos << std::endl;
 		m_animation->setLocalPos(newPos);
 		const auto force = m_k * pow(indention, 1.5) + vel.y() * pow(indention, 1.5) * 0.5;
 		return cVector3d(0, -force, 0);
