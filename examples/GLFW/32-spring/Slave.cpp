@@ -54,7 +54,7 @@ void Slave::spin()
 		m_force = springForce;
 		msgS2M.force = m_wave.calculateVs(m_vel, m_force);
 		break;
-	case ControlAlgorithm::PassivityControl:
+	case ControlAlgorithm::PC:
 		m_prevForce = m_force;
 		m_force = m_passivityControl.calculateForce(springForce, m_vel);
 		msgS2M.force = m_force;

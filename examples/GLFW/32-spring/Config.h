@@ -2,13 +2,7 @@
 
 #define DT 0.001
 
-enum class ControlAlgorithm
-{
-	None,
-	WAVE,
-	PassivityControl,
-	ISS
-};
+#include "haptic_db_ffi.h"
 
 class Config
 {

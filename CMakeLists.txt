@@ -87,6 +87,20 @@ set (CMAKE_RUNTIME_OUTPUT_DIRECTORY_RELWITHDEBINFO ${PROJECT_SOURCE_DIR}/bin/${O
 find_package (OpenGL REQUIRED)
 include_directories (OPENGL_INCLUDE_DIR)
 
+include(${CMAKE_ROOT}/Modules/ExternalProject.cmake)
+#
+ExternalProject_Add(
+        haptic_db
+        DOWNLOAD_COMMAND ""
+        CONFIGURE_COMMAND ""
+        BUILD_COMMAND cargo build COMMAND cargo build --release
+        BINARY_DIR "${CMAKE_SOURCE_DIR}/external/haptic-db"
+        INSTALL_COMMAND ""
+        LOG_BUILD ON)
+
+# Hapitc DB
+find_library(HAPTIC_DB_LIBRARY haptic_db.lib ${PROJECT_SOURCE_DIR}/external/haptic-db/target/release)
+
 # on non-Windows, DHD dependency
 if (NOT ${CMAKE_SYSTEM_NAME} MATCHES Windows)
   include_directories (${PROJECT_SOURCE_DIR}/external/DHD/include)
@@ -155,6 +169,7 @@ include_directories (${PROJECT_SOURCE_DIR}/external/theoraplayer/external/theora
 include_directories (${PROJECT_SOURCE_DIR}/external/theoraplayer/external/vorbis/include)
 include_directories (${PROJECT_SOURCE_DIR}/external/theoraplayer/external/vorbis/lib)
 include_directories (${PROJECT_SOURCE_DIR}/external/theoraplayer/src/Theora)
+include_directories (${PROJECT_SOURCE_DIR}/external/haptic-db/ffi)
 
 # static library source files
 file (GLOB_RECURSE source RELATIVE ${CHAI3D_SOURCE_DIR} ${CHAI3D_SOURCE_DIR}/src/*.cpp ${CHAI3D_SOURCE_DIR}/src/*.h)

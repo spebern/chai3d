@@ -8,6 +8,7 @@
 #include "Config.h"
 #include "array"
 #include "ToolTip.h"
+#include "haptic_db_ffi.h"
 
 using namespace chai3d;
 using namespace std;
@@ -84,6 +85,9 @@ cMesh* wall;
 
 // master environment interacting with a haptic device
 Master* master;
+
+// database to save session data and messages between slave and master
+DB* db;
 
 // remote environment controlled by the master
 Slave* slave;
@@ -262,6 +266,8 @@ int main(int argc, char* argv[])
 
 	initWorld();
 
+	db = db_new();
+
 	const std::chrono::microseconds delay(0);
 	const std::chrono::microseconds varDelay(0);
 	config = new Config();
@@ -345,6 +351,7 @@ void close(void)
 	delete hapticsThread;
 	delete world;
 	delete handler;
+	db_free(db);
 }
 
 cMesh* createWall()

@@ -46,7 +46,12 @@ foreach (example 01-mydevice 02-multi-devices 03-analytics 04-shapes 05-fonts 06
 
   file (GLOB source ${example}/*.cpp)
   add_executable (${example} ${source})
-  target_link_libraries (${example} ${CHAI3D_LIBRARIES} ${GLFW_LIBRARIES})
+
+  if (${example} MATCHES 32-spring)
+    target_link_libraries (${example} ${CHAI3D_LIBRARIES} ${GLFW_LIBRARIES} ${HAPTIC_DB_LIBRARY} advapi32 advapi32 cfgmgr32 credui fwpuclnt gdi32 kernel32 msimg32 ntdll opengl32 secur32 user32 winspool ws2_32 advapi32 ws2_32 userenv)
+  else()
+    target_link_libraries (${example} ${CHAI3D_LIBRARIES} ${GLFW_LIBRARIES})
+  endif()
   
   # OS specific adjustments
   if (${CMAKE_SYSTEM_NAME} MATCHES Darwin)
