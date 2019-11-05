@@ -71,6 +71,10 @@ GLFWwindow* window = nullptr;
 // springs the haptic device interacts with
 array<Spring*, 4> springs;
 
+
+// rating labels displaying the quality of the haptic feedback
+array<cLabel*, 4> ratingLabels;
+
 // position of the device on the slave side
 ToolTip* toolTip;
 
@@ -220,6 +224,9 @@ void initWorld()
 
 	camera->setMirrorVertical(mirroredDisplay);
 
+	cBackground* background = new cBackground();
+        camera->m_backLayer->addChild(background);
+
 	light = new cDirectionalLight(world);
 	world->addChild(light);
 	light->setEnabled(true);
@@ -227,11 +234,20 @@ void initWorld()
 	light->setDir(-1.0, 0.0, 0.0);
 
 	cVector3d springPos(0, 0, 0.15);
+	cVector3d labelPos(1100, 870, 0);
 	for (auto i = 0; i < 4; i++)
 	{
 		springs[i] = new Spring(springPos);
 		world->addChild(springs[i]->animation());
 		springPos.z(springPos.z() - 0.1);
+
+		ratingLabels[i] = new cLabel(NEW_CFONTCALIBRI28());
+		ratingLabels[i]->setText("Rating: ");
+		ratingLabels[i]->m_fontColor.setBlack();
+		ratingLabels[i]->setFontScale(4.0);
+		ratingLabels[i]->setLocalPos(labelPos);
+		labelPos.y(labelPos.y() - 260);
+		camera->m_frontLayer->addChild(ratingLabels[i]);
 	}
 
 	wall = createWall();
@@ -332,6 +348,24 @@ void keyCallback(GLFWwindow* window, int key, int scancode, int action, int mods
 		break;
 	case KEY_RIGHT:
 		network->increaseDelay(chrono::microseconds(1000));
+		break;
+	case '0':
+		ratingLabels[0]->setText("Rating: ");
+		break;
+	case '1':
+		ratingLabels[0]->setText("Rating: 1");
+		break;
+	case '2':
+		ratingLabels[0]->setText("Rating: 2");
+		break;
+	case '3':
+		ratingLabels[0]->setText("Rating: 3");
+		break;
+	case '4':
+		ratingLabels[0]->setText("Rating: 4");
+		break;
+	case '5':
+		ratingLabels[0]->setText("Rating: 5");
 		break;
 	default: ;
 	}
