@@ -9,6 +9,7 @@
 #include "array"
 #include "ToolTip.h"
 #include "haptic_db_ffi.h"
+#include "TrialController.h"
 
 using namespace chai3d;
 using namespace std;
@@ -92,6 +93,9 @@ Master* master;
 
 // database to save session data and messages between slave and master
 DB* db;
+
+// controller for the trial (4 springs and their current rating)
+TrialController* trialController;
 
 // remote environment controlled by the master
 Slave* slave;
@@ -290,7 +294,8 @@ int main(int argc, char* argv[])
 	config->controlAlgorithm(ControlAlgorithm::PassivityControl);
 	network = new Network(delay, varDelay);
 	master = new Master(network, hapticDevice, config);
-	slave = new Slave(network, springs, config, toolTip);
+	slave = new Slave(network, springs[0], config, toolTip);
+	trialController = new TrialController(slave, master, config, network, db, ratingLabels, springs);
 
 	// create a thread which starts the main haptics rendering loop
 	hapticsThread = new cThread();
@@ -338,10 +343,10 @@ void keyCallback(GLFWwindow* window, int key, int scancode, int action, int mods
 	switch (key)
 	{
 	case KEY_DOWN:
-		slave->nextSpring();
+		trialController->nextSubTrial();
 		break;
 	case KEY_UP:
-		slave->prevSpring();
+		trialController->previousSubTrial();
 		break;
 	case KEY_LEFT:
 		network->decreaseDelay(chrono::microseconds(1000));
@@ -349,24 +354,28 @@ void keyCallback(GLFWwindow* window, int key, int scancode, int action, int mods
 	case KEY_RIGHT:
 		network->increaseDelay(chrono::microseconds(1000));
 		break;
-	case '0':
-		ratingLabels[0]->setText("Rating: ");
-		break;
 	case '1':
-		ratingLabels[0]->setText("Rating: 1");
+		trialController->rate(1);
 		break;
 	case '2':
-		ratingLabels[0]->setText("Rating: 2");
+		trialController->rate(2);
 		break;
 	case '3':
-		ratingLabels[0]->setText("Rating: 3");
+		trialController->rate(3);
 		break;
 	case '4':
-		ratingLabels[0]->setText("Rating: 4");
+		trialController->rate(4);
 		break;
 	case '5':
-		ratingLabels[0]->setText("Rating: 5");
+		trialController->rate(5);
 		break;
+	case 257: // enter
+	{
+		const auto trialLeft = trialController->submitRatings();
+		if (!trialLeft)
+			exit(0);
+		break;
+	}
 	default: ;
 		std::cout << "unused key " << key << std::endl;
 	}

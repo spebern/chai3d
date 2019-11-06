@@ -18,7 +18,7 @@ class Slave
 {
 private:
 	Network* m_network;
-	array<Spring*, 4> m_springs;
+	Spring* m_spring;
 	PDController m_pdController;
 	RateLimiter m_packetRateLimiter;
 	Config* m_config;
@@ -39,17 +39,15 @@ private:
 	cVector3d m_prevForce;
 	cVector3d m_force;
 
-	uint64_t m_currentSpringIndex;
-
 	ToolTip* m_toolTip;
 
 	WAVE m_wave;
 	PassivityControl m_passivityControl;
 	ISS m_iss;
 public:
-	Slave(Network* network, array<Spring*, 4> springs, Config* config, ToolTip* toolTip)
+	Slave(Network* network, Spring* spring, Config* config, ToolTip* toolTip)
 		: m_network(network)
-		, m_springs(springs)
+		, m_spring(spring)
 		, m_config(config)
 		, m_posRef(0, 0, 0)
 		, m_pos(0, 0, 0)
@@ -59,7 +57,6 @@ public:
 		, m_prevVel(0, 0, 0)
 		, m_prevForce(0, 0, 0)
 		, m_force(0, 0, 0)
-		, m_currentSpringIndex(0)
 		, m_toolTip(toolTip)
 	{
 	}
@@ -101,40 +98,17 @@ public:
 		return (m_pos - m_prevPos) / DT;
 	}
 
-	Spring* currentSpring()
+	void updateToolTipPos() const
 	{
-		return m_springs[m_currentSpringIndex];
-	}
-
-	void updateToolTipPos()
-	{
-		const auto spring = currentSpring();
-		auto const springPos = spring->pos();
-		const auto width = spring->width();
-		const auto length = spring->length();
+		auto const springPos = m_spring->pos();
+		const auto width = m_spring->width();
+		const auto length = m_spring->length();
 		cVector3d newPos(0, m_pos.y() - length / 2 - m_toolTip->radius(), springPos.z());
 		m_toolTip->pos(newPos);
 	}
 
-	bool nextSpring()
+	void spring(Spring* spring)
 	{
-		if (currentSpring()->indented())
-			return false;
-		if (m_currentSpringIndex == m_springs.size() - 1)
-			m_currentSpringIndex = 0;
-		else
-			m_currentSpringIndex++;
-		return true;
-	}
-
-	bool prevSpring()
-	{
-		if (currentSpring()->indented())
-			return false;
-		if (m_currentSpringIndex == 0)
-			m_currentSpringIndex = m_springs.size() - 1;
-		else
-			m_currentSpringIndex--;
-		return true;
+		m_spring = spring;
 	}
 };

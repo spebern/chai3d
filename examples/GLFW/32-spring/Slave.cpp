@@ -29,7 +29,7 @@ void Slave::spin()
 
 	auto const pdForce = m_pdController.calculateForce(m_posRef, m_pos, m_velRef, m_vel);
 
-	auto springForce = currentSpring()->updatePositionAndCalculateForce(m_pos, m_vel);
+	auto springForce = m_spring->updatePositionAndCalculateForce(m_pos, m_vel);
 
 	updateToolTipPos();
 
