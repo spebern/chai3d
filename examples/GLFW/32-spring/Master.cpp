@@ -39,12 +39,12 @@ void Master::spin()
 			break;
 		}
 		force = limitForce(force);
-		m_hapticDevice->setForce(force);
+		//m_hapticDevice->setForce(force);
 		m_prevForce = force;
 	}
 	else
 	{
-		m_hapticDevice->setForce(m_prevForce);
+		//m_hapticDevice->setForce(m_prevForce);
 	}
 }
 

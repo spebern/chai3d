@@ -9,6 +9,7 @@
 #include "array"
 #include "ToolTip.h"
 #include "haptic_db_ffi.h"
+#include "vector"
 #include "TrialController.h"
 
 using namespace chai3d;
@@ -288,10 +289,15 @@ int main(int argc, char* argv[])
 
 	db = db_new();
 
+	vector<int32_t> packet_rates;
+	packet_rates.push_back(10);
+	packet_rates.push_back(50);
+	packet_rates.push_back(100);
+	db_new_session(db, 25, Gender::Male, Handedness::Right, packet_rates.data(), packet_rates.size(), 1);
+
 	const std::chrono::microseconds delay(0);
 	const std::chrono::microseconds varDelay(0);
 	config = new Config();
-	config->controlAlgorithm(ControlAlgorithm::PassivityControl);
 	network = new Network(delay, varDelay);
 	master = new Master(network, hapticDevice, config);
 	slave = new Slave(network, springs[0], config, toolTip);
