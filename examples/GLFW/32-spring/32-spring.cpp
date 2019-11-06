@@ -368,6 +368,7 @@ void keyCallback(GLFWwindow* window, int key, int scancode, int action, int mods
 		ratingLabels[0]->setText("Rating: 5");
 		break;
 	default: ;
+		std::cout << "unused key " << key << std::endl;
 	}
 }
 
