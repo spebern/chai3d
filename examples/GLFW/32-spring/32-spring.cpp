@@ -77,6 +77,12 @@ array<Spring*, 4> springs;
 // rating labels displaying the quality of the haptic feedback
 array<cLabel*, 4> ratingLabels;
 
+// labels displaying the algorithm used
+array<cLabel*, 4> algorithmLabels;
+
+// label that displays the packet rate
+cLabel* packetRateLabel;
+
 // position of the device on the slave side
 ToolTip* toolTip;
 
@@ -239,7 +245,8 @@ void initWorld()
 	light->setDir(-1.0, 0.0, 0.0);
 
 	cVector3d springPos(0, 0, 0.15);
-	cVector3d labelPos(1100, 870, 0);
+	cVector3d ratingLabelPos(1100, 870, 0);
+	cVector3d algorithmLabelPos(900, 890, 0);
 	for (auto i = 0; i < 4; i++)
 	{
 		springs[i] = new Spring(springPos);
@@ -247,13 +254,25 @@ void initWorld()
 		springPos.z(springPos.z() - 0.1);
 
 		ratingLabels[i] = new cLabel(NEW_CFONTCALIBRI28());
-		ratingLabels[i]->setText("Rating: ");
 		ratingLabels[i]->m_fontColor.setBlack();
 		ratingLabels[i]->setFontScale(4.0);
-		ratingLabels[i]->setLocalPos(labelPos);
-		labelPos.y(labelPos.y() - 260);
+		ratingLabels[i]->setLocalPos(ratingLabelPos);
+		ratingLabelPos.y(ratingLabelPos.y() - 260);
 		camera->m_frontLayer->addChild(ratingLabels[i]);
+
+		algorithmLabels[i] = new cLabel(NEW_CFONTCALIBRI16());
+		algorithmLabels[i]->m_fontColor.setBlack();
+		algorithmLabels[i]->setFontScale(4.0);
+		algorithmLabels[i]->setLocalPos(algorithmLabelPos);
+		algorithmLabelPos.y(algorithmLabelPos.y() - 260);
+		camera->m_frontLayer->addChild(algorithmLabels[i]);
 	}
+
+	packetRateLabel = new cLabel(NEW_CFONTCALIBRI28());
+	packetRateLabel->m_fontColor.setBlack();
+	packetRateLabel->setFontScale(4.0);
+	packetRateLabel->setLocalPos(900, 0, 0);
+	camera->m_frontLayer->addChild(packetRateLabel);
 
 	wall = createWall();
 	world->addChild(wall);
@@ -289,11 +308,11 @@ int main(int argc, char* argv[])
 
 	db = db_new();
 
-	vector<int32_t> packet_rates;
-	packet_rates.push_back(10);
-	packet_rates.push_back(50);
-	packet_rates.push_back(100);
-	db_new_session(db, 25, Gender::Male, Handedness::Right, packet_rates.data(), packet_rates.size(), 1);
+	vector<int32_t> packetRates;
+	packetRates.push_back(10);
+	packetRates.push_back(50);
+	packetRates.push_back(100);
+	db_new_session(db, 25, Gender::Male, Handedness::Right, packetRates.data(), packetRates.size(), 1);
 
 	const std::chrono::microseconds delay(0);
 	const std::chrono::microseconds varDelay(0);
@@ -301,7 +320,7 @@ int main(int argc, char* argv[])
 	network = new Network(delay, varDelay);
 	master = new Master(network, hapticDevice, config);
 	slave = new Slave(network, springs[0], config, toolTip);
-	trialController = new TrialController(slave, master, config, network, db, ratingLabels, springs);
+	trialController = new TrialController(slave, master, config, network, db, ratingLabels, springs, algorithmLabels, packetRateLabel);
 
 	// create a thread which starts the main haptics rendering loop
 	hapticsThread = new cThread();
@@ -382,6 +401,9 @@ void keyCallback(GLFWwindow* window, int key, int scancode, int action, int mods
 			exit(0);
 		break;
 	}
+	case 86: // 'v'
+		trialController->toggleConfig();
+		break;
 	default: ;
 		std::cout << "unused key " << key << std::endl;
 	}

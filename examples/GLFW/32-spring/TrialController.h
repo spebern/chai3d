@@ -22,34 +22,74 @@ private:
 	DB* m_db;
 	Config* m_config;
 	array<cLabel*, 4> m_ratingLabels;
+	array<cLabel*, 4> m_algorithmLabels;
 	array<int32_t, 4> m_ratings;
 	array<Spring*, 4> m_springs;
 
+	cLabel* m_packetRateLabel;
+
 	TrialInfo m_currentTrialInfo;
+
+	bool m_showingConfig = false;
 
 	void initCurrentSubTrial()
 	{
 		const auto controlAlgo = m_currentTrialInfo.controlAlgos[m_currentSubTrialIdx];
+		if (controlAlgo == ControlAlgorithm::None)
+		{
+			m_master->packetRate(1000.0);
+			m_slave->packetRate(1000.0);
+		}
+		else
+		{
+			m_master->packetRate(m_currentTrialInfo.packetRate);
+			m_slave->packetRate(m_currentTrialInfo.packetRate);
+		}
 		m_config->controlAlgorithm(controlAlgo);
 		m_slave->spring(m_springs[m_currentSubTrialIdx]);
-		// ToDo: why?
-		// m_network->clearChannels();
 	}
 
 	void initCurrentTrial()
 	{
 		m_currentTrialInfo = db_current_trial_info(m_db);
-		m_slave->packetRate(m_currentTrialInfo.packetRate);
-		m_master->packetRate(m_currentTrialInfo.packetRate);
 		for (auto& ratingLabel: m_ratingLabels)
 			ratingLabel->setText("Rating: ");
 		for (auto& rating: m_ratings)
 			rating = 0;
-		// ToDo: set delay
-		m_network->clearChannels();
 	}
+
+	void clearConfig()
+	{
+		m_packetRateLabel->setText("");
+		for (auto& label : m_algorithmLabels)
+			label->setText("");
+	}
+
+	void showConfig() const
+	{
+		m_packetRateLabel->setText(std::to_string(m_currentTrialInfo.packetRate) + " Hz");
+		for (auto i = 0; i < m_algorithmLabels.size(); i++)
+		{
+			switch (m_currentTrialInfo.controlAlgos[i])
+			{
+			case ControlAlgorithm::None:
+				m_algorithmLabels[i]->setText("REF");
+				break;
+			case ControlAlgorithm::WAVE:
+				m_algorithmLabels[i]->setText("WAVE");
+				break;
+			case ControlAlgorithm::ISS:
+				m_algorithmLabels[i]->setText("ISS");
+				break;
+			case ControlAlgorithm::PC:
+				m_algorithmLabels[i]->setText("TDPA");
+				break;
+			}
+		}
+	}
+
 public:
-	TrialController(Slave* slave, Master* master, Config* config, Network* network, DB* db, array<cLabel*, 4> ratingLabels, array<Spring*, 4> springs)
+	TrialController(Slave* slave, Master* master, Config* config, Network* network, DB* db, array<cLabel*, 4> ratingLabels, array<Spring*, 4> springs, array<cLabel*, 4> algorithmLabels, cLabel* packetRateLabel)
 		: m_slave(slave)
 		  , m_master(master)
 		  , m_network(network)
@@ -57,6 +97,8 @@ public:
 		  , m_config(config)
 		  , m_ratingLabels(ratingLabels)
 		  , m_springs(springs)
+		  , m_packetRateLabel(packetRateLabel)
+                  , m_algorithmLabels(algorithmLabels)
 	{
 		initCurrentTrial();
 		initCurrentSubTrial();
@@ -99,8 +141,25 @@ public:
 		const auto trialLeft = db_next_trial(m_db);
 		if (!trialLeft)
 			return false;
+		clearConfig();
 		initCurrentTrial();
 		initCurrentSubTrial();
+		if (m_showingConfig)
+			showConfig();
 		return true;
+	}
+
+	void toggleConfig()
+	{
+		if (m_showingConfig)
+		{
+			clearConfig();
+			m_showingConfig = false;
+		}
+		else
+		{
+			showConfig();
+			m_showingConfig = true;
+		}
 	}
 };
