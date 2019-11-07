@@ -14,7 +14,7 @@ void Slave::spin()
 		switch (controlAlgorithm)
 		{
 		case ControlAlgorithm::WAVE:
-			m_velRef = m_wave.calculateVelS(msgM2S.vel, m_prevForce);
+			m_velRef = m_wave.calculateVelS(msgM2S.vel, m_force);
 			break;
 		case ControlAlgorithm::ISS:
 			m_velRef = m_iss.calculateVel(msgM2S.vel, dForce());
@@ -24,8 +24,6 @@ void Slave::spin()
 			break;
 		}
 	}
-	else
-		m_posRef = m_posRef + m_velRef * DT;
 
 	auto const pdForce = m_pdController.calculateForce(m_posRef, m_pos, m_velRef, m_vel);
 
@@ -33,7 +31,7 @@ void Slave::spin()
 
 	updateToolTipPos();
 
-	auto const totalForce = pdForce + springForce;
+	const auto totalForce = pdForce + springForce;
 
 	auto const acceleration = (totalForce - m_mass * m_vel) / m_damping;
 
@@ -52,7 +50,7 @@ void Slave::spin()
 	case ControlAlgorithm::WAVE:
 		m_prevForce = m_force;
 		m_force = springForce;
-		msgS2M.force = m_wave.calculateVs(m_vel, m_force);
+		msgS2M.force = m_wave.calculateVs(m_velRef, m_force);
 		break;
 	case ControlAlgorithm::PC:
 		m_prevForce = m_force;
@@ -60,9 +58,9 @@ void Slave::spin()
 		msgS2M.force = m_force;
 		break;
 	case ControlAlgorithm::ISS:
+		m_force = m_iss.calculateForce(springForce, dForce());
 		m_iss.updateMuMax(m_force, m_prevForce, m_pos, m_prevPos);
 		m_prevForce = m_force;
-		m_force = m_iss.calculateForce(springForce, dForce());
 		msgS2M.force = m_force;
 		break;
 	default:
