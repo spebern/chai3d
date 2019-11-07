@@ -50,7 +50,7 @@ void Slave::spin()
 	case ControlAlgorithm::WAVE:
 		m_prevForce = m_force;
 		m_force = springForce;
-		msgS2M.force = m_wave.calculateVs(m_velRef, m_force);
+		msgS2M.force = m_wave.calculateVs(m_vel, m_force);
 		break;
 	case ControlAlgorithm::PC:
 		m_prevForce = m_force;
