@@ -282,6 +282,41 @@ void initWorld()
 	world->addChild(toolTip->animation());
 }
 
+Gender readGender()
+{
+	string input;
+	do
+	{
+		cout << "please enter your gender (male|female): ";
+		cin >> input;
+		input = trim(input);
+	} while (input != "male" && input != "female");
+	return input == "male" ? Gender::Male : Gender::Female;
+}
+
+Handedness readHandedness()
+{
+	string input;
+	do
+	{
+		cout << "please enter your handedness (right|left): ";
+		cin >> input;
+		input = trim(input);
+	} while (input != "right" && input != "left");
+	return input == "right" ? Handedness::Right : Handedness::Left;
+}
+
+int32_t readAge()
+{
+	auto age = 0;
+	do
+	{
+		cout << "please enter your age: ";
+		cin >> age;
+	} while (age == 0);
+	return age;
+}
+
 int main(int argc, char* argv[])
 {
 	cout << endl;
@@ -302,17 +337,21 @@ int main(int argc, char* argv[])
 
 	const auto info = hapticDevice->getSpecifications();
 
-	initOpenGL();
-
-	initWorld();
-
 	db = db_new();
 
 	vector<int32_t> packetRates;
 	packetRates.push_back(10);
 	packetRates.push_back(50);
 	packetRates.push_back(100);
-	db_new_session(db, 25, Gender::Male, Handedness::Right, packetRates.data(), packetRates.size(), 1);
+
+	const auto age = readAge();
+	const auto gender = readGender();
+	const auto handedness = readHandedness();
+	db_new_session(db, age, gender, handedness, packetRates.data(), packetRates.size(), 1);
+
+	initOpenGL();
+
+	initWorld();
 
 	const std::chrono::microseconds delay(0);
 	const std::chrono::microseconds varDelay(0);
