@@ -16,6 +16,7 @@ public:
 	explicit Spring(const cVector3d pos): m_k(200.0), m_length(0.2), m_width(0.05), m_animation(nullptr)
 	{
 		m_animation = new cShapeBox(0, m_length, m_width);
+		m_animation->m_material->setWhite();
 		m_animation->setLocalPos(pos);
 	}
 
@@ -63,5 +64,15 @@ public:
 	double width() const
 	{
 		return m_width;
+	}
+
+	void markReference()
+	{
+		m_animation->m_material->setRed();
+	}
+
+	void unmarkReference()
+	{
+		m_animation->m_material->setWhite();
 	}
 };

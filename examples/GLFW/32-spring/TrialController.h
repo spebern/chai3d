@@ -20,32 +20,36 @@ private:
 	Network* m_network;
 	DB* m_db;
 	Config* m_config;
-	array<cLabel*, 4> m_ratingLabels;
-	array<cLabel*, 4> m_algorithmLabels;
-	array<int32_t, 4> m_ratings;
-	array<Spring*, 4> m_springs;
+	array<cLabel*, 3> m_ratingLabels;
+	array<cLabel*, 3> m_algorithmLabels;
+	array<int32_t, 3> m_ratings;
+	array<Spring*, 3> m_springs;
 
 	cLabel* m_packetRateLabel;
 
 	TrialInfo m_currentTrialInfo;
 
 	bool m_showingConfig = false;
+	bool m_useReference = false;
 
 	void initCurrentSubTrial()
 	{
 		const auto subTrialIdx = m_config->subTrialIdx();
-		const auto controlAlgo = m_currentTrialInfo.controlAlgos[subTrialIdx];
-		if (controlAlgo == ControlAlgorithm::None)
+		if (m_useReference)
 		{
+			m_config->controlAlgorithm(ControlAlgorithm::None);
 			m_master->packetRate(1000.0);
 			m_slave->packetRate(1000.0);
+			m_springs[subTrialIdx]->markReference();
 		}
 		else
 		{
+			const auto controlAlgo = m_currentTrialInfo.controlAlgos[subTrialIdx];
+			m_config->controlAlgorithm(controlAlgo);
 			m_master->packetRate(m_currentTrialInfo.packetRate);
 			m_slave->packetRate(m_currentTrialInfo.packetRate);
+			m_springs[subTrialIdx]->unmarkReference();
 		}
-		m_config->controlAlgorithm(controlAlgo);
 		m_slave->spring(m_springs[subTrialIdx]);
 	}
 
@@ -89,7 +93,7 @@ private:
 	}
 
 public:
-	TrialController(Slave* slave, Master* master, Config* config, Network* network, DB* db, array<cLabel*, 4> ratingLabels, array<Spring*, 4> springs, array<cLabel*, 4> algorithmLabels, cLabel* packetRateLabel)
+	TrialController(Slave* slave, Master* master, Config* config, Network* network, DB* db, array<cLabel*, 3> ratingLabels, array<Spring*, 3> springs, array<cLabel*, 3> algorithmLabels, cLabel* packetRateLabel)
 		: m_slave(slave)
 		  , m_master(master)
 		  , m_network(network)
@@ -164,6 +168,20 @@ public:
 		{
 			showConfig();
 			m_showingConfig = true;
+		}
+	}
+
+	void toggleReference()
+	{
+		if (m_useReference)
+		{
+			m_useReference = false;
+			initCurrentSubTrial();
+		}
+		else
+		{
+			m_useReference = true;
+			initCurrentSubTrial();
 		}
 	}
 };

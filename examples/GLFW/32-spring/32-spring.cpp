@@ -50,7 +50,7 @@ cWorld* world;
 cCamera* camera;
 
 // a light source to illuminate the objects in the world
-cDirectionalLight* light;
+cPositionalLight* light;
 
 // a haptic device handler
 cHapticDeviceHandler* handler;
@@ -71,14 +71,14 @@ cThread* hapticsThread;
 GLFWwindow* window = nullptr;
 
 // springs the haptic device interacts with
-array<Spring*, 4> springs;
+array<Spring*, 3> springs;
 
 
 // rating labels displaying the quality of the haptic feedback
-array<cLabel*, 4> ratingLabels;
+array<cLabel*, 3> ratingLabels;
 
 // labels displaying the algorithm used
-array<cLabel*, 4> algorithmLabels;
+array<cLabel*, 3> algorithmLabels;
 
 // label that displays the packet rate
 cLabel* packetRateLabel;
@@ -236,18 +236,16 @@ void initWorld()
 	camera->setMirrorVertical(mirroredDisplay);
 
 	cBackground* background = new cBackground();
-        camera->m_backLayer->addChild(background);
+	camera->m_backLayer->addChild(background);
 
-	light = new cDirectionalLight(world);
+	light = new cPositionalLight(world);
 	world->addChild(light);
 	light->setEnabled(true);
-
-	light->setDir(-1.0, 0.0, 0.0);
 
 	cVector3d springPos(0, 0, 0.15);
 	cVector3d ratingLabelPos(1100, 870, 0);
 	cVector3d algorithmLabelPos(900, 890, 0);
-	for (auto i = 0; i < 4; i++)
+	for (auto i = 0; i < 3; i++)
 	{
 		springs[i] = new Spring(springPos);
 		world->addChild(springs[i]->animation());
@@ -371,8 +369,8 @@ int main(int argc, char* argv[])
 	const std::chrono::microseconds varDelay(0);
 	config = new Config();
 	network = new Network(delay, varDelay);
-	master = new Master(network, hapticDevice, config);
-	slave = new Slave(network, springs[0], config, toolTip);
+	master = new Master(network, hapticDevice, config, db);
+	slave = new Slave(network, springs[0], config, toolTip, db);
 	trialController = new TrialController(slave, master, config, network, db, ratingLabels, springs, algorithmLabels, packetRateLabel);
 
 	// create a thread which starts the main haptics rendering loop
@@ -427,10 +425,10 @@ void keyCallback(GLFWwindow* window, int key, int scancode, int action, int mods
 		trialController->previousSubTrial();
 		break;
 	case KEY_LEFT:
-		network->decreaseDelay(chrono::microseconds(1000));
+		// network->decreaseDelay(chrono::microseconds(1000));
 		break;
 	case KEY_RIGHT:
-		network->increaseDelay(chrono::microseconds(1000));
+		// network->increaseDelay(chrono::microseconds(1000));
 		break;
 	case '1':
 		trialController->rate(1);
@@ -456,6 +454,9 @@ void keyCallback(GLFWwindow* window, int key, int scancode, int action, int mods
 	}
 	case 86: // 'v'
 		trialController->toggleConfig();
+		break;
+	case 82: // '3'
+		trialController->toggleReference();
 		break;
 	default: ;
 		std::cout << "unused key " << key << std::endl;
