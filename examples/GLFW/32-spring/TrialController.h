@@ -15,7 +15,6 @@ using namespace chai3d;
 class TrialController
 {
 private:
-	uint32_t m_currentSubTrialIdx = 0;
 	Slave* m_slave;
 	Master* m_master;
 	Network* m_network;
@@ -34,7 +33,8 @@ private:
 
 	void initCurrentSubTrial()
 	{
-		const auto controlAlgo = m_currentTrialInfo.controlAlgos[m_currentSubTrialIdx];
+		const auto subTrialIdx = m_config->subTrialIdx();
+		const auto controlAlgo = m_currentTrialInfo.controlAlgos[subTrialIdx];
 		if (controlAlgo == ControlAlgorithm::None)
 		{
 			m_master->packetRate(1000.0);
@@ -46,7 +46,7 @@ private:
 			m_slave->packetRate(m_currentTrialInfo.packetRate);
 		}
 		m_config->controlAlgorithm(controlAlgo);
-		m_slave->spring(m_springs[m_currentSubTrialIdx]);
+		m_slave->spring(m_springs[subTrialIdx]);
 	}
 
 	void initCurrentTrial()
@@ -106,26 +106,30 @@ public:
 
 	void nextSubTrial()
 	{
-		if (m_currentSubTrialIdx == m_springs.size() - 1)
-			m_currentSubTrialIdx = 0;
+		const auto subTrialIdx = m_config->subTrialIdx();
+		if (subTrialIdx == m_springs.size() - 1)
+			m_config->subTrialIdx(0);
 		else
-			m_currentSubTrialIdx++;
+
+			m_config->subTrialIdx(subTrialIdx + 1);
 		initCurrentSubTrial();
 	}
 
 	void previousSubTrial()
 	{
-		if (m_currentSubTrialIdx == 0)
-			m_currentSubTrialIdx = m_springs.size() - 1;
+		const auto subTrialIdx = m_config->subTrialIdx();
+		if (subTrialIdx == 0)
+			m_config->subTrialIdx(m_springs.size() - 1);
 		else
-			m_currentSubTrialIdx--;
+			m_config->subTrialIdx(subTrialIdx - 1);
 		initCurrentSubTrial();
 	}
 
 	void rate(const int32_t rating)
 	{
-		m_ratingLabels[m_currentSubTrialIdx]->setText("Rating: " + std::to_string(rating));
-		m_ratings[m_currentSubTrialIdx] = rating;
+		const auto subTrialIdx = m_config->subTrialIdx();
+		m_ratingLabels[subTrialIdx]->setText("Rating: " + std::to_string(rating));
+		m_ratings[subTrialIdx] = rating;
 	}
 
 	bool submitRatings()

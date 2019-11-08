@@ -8,6 +8,7 @@ class Config
 {
 private:
 	ControlAlgorithm m_controlAlgorithm;
+	uint32_t m_subTrialIdx = 0;
 public:
 	Config(): m_controlAlgorithm(ControlAlgorithm::None) {}
 
@@ -19,5 +20,15 @@ public:
 	ControlAlgorithm controlAlgorithm() const
 	{
 		return m_controlAlgorithm;
+	}
+
+	void subTrialIdx(const uint32_t subTrialIdx)
+	{
+		m_subTrialIdx = subTrialIdx;
+	}
+
+	uint32_t subTrialIdx() const
+	{
+		return m_subTrialIdx;
 	}
 };
