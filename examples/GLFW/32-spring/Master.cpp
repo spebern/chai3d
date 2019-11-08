@@ -21,14 +21,28 @@ void Master::spin()
 		break;
 	}
 
+	if (SAVE_MSG_STREAM_TO_DB)
+	{
+		auto dbMsg = hapticMessageM2StoDbMsg(msgM2S);
+		db_insert_haptic_message_m2s(m_db, Device::Master, m_config->subTrialIdx(), dbMsg);
+	}
+
 	if (!m_packetRateLimiter.limited())
+	{
 		m_network->sendM2S(msgM2S);
+	}
 
 	HapticMessageS2M msgS2M;
 	const auto receivedNewMessage = m_network->tryReceiveS2M(msgS2M);
 	cVector3d force;
 	if (receivedNewMessage)
 	{
+		if (SAVE_MSG_STREAM_TO_DB)
+		{
+			auto dbMsg = hapticMessageS2MtoDbMsg(msgS2M);
+			db_insert_haptic_message_s2m(m_db, Device::Master, m_config->subTrialIdx(), dbMsg);
+		}
+
 		switch (controlAlgorithm)
 		{
 		case ControlAlgorithm::WAVE:

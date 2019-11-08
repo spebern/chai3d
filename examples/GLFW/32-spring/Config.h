@@ -1,5 +1,7 @@
 #pragma once
 
+#define SAVE_MSG_STREAM_TO_DB 1
+
 #define DT 0.001
 
 #include "haptic_db_ffi.h"

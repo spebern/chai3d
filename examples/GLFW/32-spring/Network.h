@@ -3,6 +3,7 @@
 #include <chrono>;
 #include "chai3d.h"
 #include "Channel.h"
+#include "haptic_db_ffi.h"
 
 using namespace std;
 using namespace chai3d;
@@ -19,6 +20,29 @@ struct HapticMessageS2M
 	int32_t sequenceNumber;
 	cVector3d force;
 };
+
+inline DBHapticMessageM2S hapticMessageM2StoDbMsg(HapticMessageM2S& msg)
+{
+	DBHapticMessageM2S dbMsg{};
+	dbMsg.sequenceNumber = msg.sequenceNumber;
+	for (auto i = 0; i < 3; i++)
+	{
+		dbMsg.pos[i] = msg.pos.get(i);
+		dbMsg.vel[i] = msg.vel.get(i);
+	}
+	return dbMsg;
+}
+
+inline DBHapticMessageS2M hapticMessageS2MtoDbMsg(HapticMessageS2M& msg)
+{
+	DBHapticMessageS2M dbMsg;
+	dbMsg.sequenceNumber = msg.sequenceNumber;
+	for (auto i = 0; i < 3; i++)
+	{
+		dbMsg.force[i] = msg.force.get(i);
+	}
+	return dbMsg;
+}
 
 class Network
 {

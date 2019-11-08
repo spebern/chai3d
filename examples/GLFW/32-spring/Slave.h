@@ -9,8 +9,8 @@
 #include "WAVE.h"
 #include "PassivityControl.h"
 #include "ISS.h"
-#include "array"
 #include "ToolTip.h"
+#include "haptic_db_ffi.h"
 
 using namespace chai3d;
 
@@ -44,8 +44,10 @@ private:
 	WAVE m_wave;
 	PassivityControl m_passivityControl;
 	ISS m_iss;
+
+	DB* m_db;
 public:
-	Slave(Network* network, Spring* spring, Config* config, ToolTip* toolTip)
+	Slave(Network* network, Spring* spring, Config* config, ToolTip* toolTip, DB* db)
 		: m_network(network)
 		, m_spring(spring)
 		, m_config(config)
@@ -58,6 +60,7 @@ public:
 		, m_prevForce(0, 0, 0)
 		, m_force(0, 0, 0)
 		, m_toolTip(toolTip)
+		, m_db(db)
 	{
 	}
 

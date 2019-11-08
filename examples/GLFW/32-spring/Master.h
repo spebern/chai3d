@@ -6,6 +6,7 @@
 #include "Config.h"
 #include "WAVE.h"
 #include "ISS.h"
+#include "haptic_db_ffi.h"
 
 using namespace std;
 using namespace chai3d;
@@ -24,13 +25,16 @@ private:
 
 	WAVE m_wave;
 	ISS m_iss;
+
+	DB* m_db;
 public:
-	Master(Network* network, const cGenericHapticDevicePtr hapticDevice, Config* config)
+	Master(Network* network, const cGenericHapticDevicePtr hapticDevice, Config* config, DB* db)
 		: m_network(network)
 		, m_hapticDevice(hapticDevice)
 		, m_config(config)
 		, m_prevPos(0, 0, 0)
 		, m_prevForce(0, 0, 0)
+		, m_db(db)
 	{
 	}
 
