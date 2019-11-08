@@ -282,6 +282,19 @@ void initWorld()
 	world->addChild(toolTip->animation());
 }
 
+string readNickname()
+{
+	string input;
+	do
+	{
+		cout << "please enter your nickname: ";
+		cin >> input;
+		input = trim(input);
+	} while (input.size() == 0 || input.size() > 20);
+	return input;
+}
+
+
 Gender readGender()
 {
 	string input;
@@ -344,10 +357,11 @@ int main(int argc, char* argv[])
 	packetRates.push_back(50);
 	packetRates.push_back(100);
 
+	const auto nickname = readNickname();
 	const auto age = readAge();
 	const auto gender = readGender();
 	const auto handedness = readHandedness();
-	db_new_session(db, age, gender, handedness, packetRates.data(), packetRates.size(), 1);
+	db_new_session(db, nickname.c_str(), age, gender, handedness, packetRates.data(), packetRates.size(), 1);
 
 	initOpenGL();
 
