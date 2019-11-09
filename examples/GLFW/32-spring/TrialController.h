@@ -20,10 +20,10 @@ private:
 	Network* m_network;
 	DB* m_db;
 	Config* m_config;
-	array<cLabel*, 3> m_ratingLabels;
-	array<cLabel*, 3> m_algorithmLabels;
-	array<int32_t, 3> m_ratings;
-	array<Spring*, 3> m_springs;
+	array<cLabel*, 4> m_ratingLabels;
+	array<cLabel*, 4> m_algorithmLabels;
+	array<int32_t, 4> m_ratings;
+	array<Spring*, 4> m_springs;
 
 	cLabel* m_packetRateLabel;
 
@@ -93,16 +93,16 @@ private:
 	}
 
 public:
-	TrialController(Slave* slave, Master* master, Config* config, Network* network, DB* db, array<cLabel*, 3> ratingLabels, array<Spring*, 3> springs, array<cLabel*, 3> algorithmLabels, cLabel* packetRateLabel)
+	TrialController(Slave* slave, Master* master, Config* config, Network* network, DB* db, array<cLabel*, 4> ratingLabels, array<Spring*, 4> springs, array<cLabel*, 4> algorithmLabels, cLabel* packetRateLabel)
 		: m_slave(slave)
-		  , m_master(master)
-		  , m_network(network)
-		  , m_db(db)
-		  , m_config(config)
-		  , m_ratingLabels(ratingLabels)
-		  , m_springs(springs)
-		  , m_packetRateLabel(packetRateLabel)
-                  , m_algorithmLabels(algorithmLabels)
+		, m_master(master)
+		, m_network(network)
+		, m_db(db)
+		, m_config(config)
+		, m_ratingLabels(ratingLabels)
+		, m_algorithmLabels(algorithmLabels)
+		, m_springs(springs)
+		, m_packetRateLabel(packetRateLabel)
 	{
 		initCurrentTrial();
 		initCurrentSubTrial();

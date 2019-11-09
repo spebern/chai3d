@@ -71,14 +71,14 @@ cThread* hapticsThread;
 GLFWwindow* window = nullptr;
 
 // springs the haptic device interacts with
-array<Spring*, 3> springs;
+array<Spring*, 4> springs;
 
 
 // rating labels displaying the quality of the haptic feedback
-array<cLabel*, 3> ratingLabels;
+array<cLabel*, 4> ratingLabels;
 
 // labels displaying the algorithm used
-array<cLabel*, 3> algorithmLabels;
+array<cLabel*, 4> algorithmLabels;
 
 // label that displays the packet rate
 cLabel* packetRateLabel;
@@ -245,7 +245,7 @@ void initWorld()
 	cVector3d springPos(0, 0, 0.15);
 	cVector3d ratingLabelPos(1100, 870, 0);
 	cVector3d algorithmLabelPos(900, 890, 0);
-	for (auto i = 0; i < 3; i++)
+	for (auto i = 0; i < 4; i++)
 	{
 		springs[i] = new Spring(springPos);
 		world->addChild(springs[i]->animation());
