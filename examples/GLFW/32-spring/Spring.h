@@ -12,10 +12,17 @@ private:
 	double m_length;
 	double m_width;
 	cShapeBox* m_animation;
+
+	cVector3d m_initialPos;
 public:
-	explicit Spring(const cVector3d pos): m_k(200.0), m_length(0.2), m_width(0.05), m_animation(nullptr)
+	explicit Spring(const cVector3d pos)
+		: m_k(800.0)
+		, m_length(0.3)
+		, m_width(0.05)
+		, m_animation(nullptr)
+		, m_initialPos(pos)
 	{
-		m_animation = new cShapeBox(0, m_length, m_width);
+		m_animation = new cShapeBox(0.0, m_length, m_width);
 		m_animation->m_material->setWhite();
 		m_animation->setLocalPos(pos);
 	}
@@ -27,15 +34,14 @@ public:
 
 	cVector3d updatePositionAndCalculateForce(cVector3d& pos, cVector3d& vel) const
 	{
-		const auto indention = max(0.0, pos.y());
-		auto newPos = m_animation->getLocalPos();
-		if (indention < 0.0)
+		const auto indention = max(0.0, pos.y() - m_initialPos.y());
+		if (indention < 0.00)
 		{
-			newPos.y(0);
-			m_animation->setLocalPos(newPos);
+			m_animation->setLocalPos(m_initialPos);
 			return cVector3d(0, 0, 0);
 		}
-		newPos.y(indention);
+		auto newPos = m_initialPos;
+		newPos.y(m_initialPos.y() + indention);
 		m_animation->setLocalPos(newPos);
 		const auto force = m_k * pow(indention, 1.5) + vel.y() * pow(indention, 1.5) * 0.5;
 		return cVector3d(0, -force, 0);
@@ -66,12 +72,12 @@ public:
 		return m_width;
 	}
 
-	void markReference()
+	void markReference() const
 	{
 		m_animation->m_material->setRed();
 	}
 
-	void unmarkReference()
+	void unmarkReference() const
 	{
 		m_animation->m_material->setWhite();
 	}
