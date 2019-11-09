@@ -44,7 +44,7 @@ public:
 
 	static cVector3d limitForce(cVector3d& force)
 	{
-		return force.length() > 5.0 ? force / force.length() * 5.0 : force;
+		return force.length() > 10.0 ? force / force.length() * 10.0 : force;
 	}
 
 	void packetRate(const double rate)
