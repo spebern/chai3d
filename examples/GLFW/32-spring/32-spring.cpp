@@ -83,6 +83,9 @@ array<cLabel*, 4> algorithmLabels;
 // label that displays the packet rate
 cLabel* packetRateLabel;
 
+// label that displays the delay
+cLabel* delayLabel;
+
 // position of the device on the slave side
 ToolTip* toolTip;
 
@@ -272,6 +275,12 @@ void initWorld()
 	packetRateLabel->setLocalPos(900, 0, 0);
 	camera->m_frontLayer->addChild(packetRateLabel);
 
+	delayLabel = new cLabel(NEW_CFONTCALIBRI28());
+	delayLabel->m_fontColor.setBlack();
+	delayLabel->setFontScale(4.0);
+	delayLabel->setLocalPos(1300, 0, 0);
+	camera->m_frontLayer->addChild(delayLabel);
+
 	wall = createWall();
 	world->addChild(wall);
 	wall->setLocalPos(0, 0, 0);
@@ -371,7 +380,7 @@ int main(int argc, char* argv[])
 	network = new Network(delay, varDelay);
 	master = new Master(network, hapticDevice, config, db);
 	slave = new Slave(network, springs[0], config, toolTip, db);
-	trialController = new TrialController(slave, master, config, network, db, ratingLabels, springs, algorithmLabels, packetRateLabel);
+	trialController = new TrialController(slave, master, config, network, db, ratingLabels, springs, algorithmLabels, packetRateLabel, delayLabel);
 
 	// create a thread which starts the main haptics rendering loop
 	hapticsThread = new cThread();

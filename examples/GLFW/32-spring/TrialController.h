@@ -26,6 +26,7 @@ private:
 	array<Spring*, 4> m_springs;
 
 	cLabel* m_packetRateLabel;
+	cLabel* m_delayLabel;
 
 	TrialInfo m_currentTrialInfo;
 
@@ -65,6 +66,7 @@ private:
 	void clearConfig()
 	{
 		m_packetRateLabel->setText("");
+		m_delayLabel->setText("");
 		for (auto& label : m_algorithmLabels)
 			label->setText("");
 	}
@@ -72,6 +74,7 @@ private:
 	void showConfig() const
 	{
 		m_packetRateLabel->setText(std::to_string(m_currentTrialInfo.packetRate) + " Hz");
+		m_delayLabel->setText(std::to_string(m_currentTrialInfo.delay) + " ms");
 		for (auto i = 0; i < m_algorithmLabels.size(); i++)
 		{
 			switch (m_currentTrialInfo.controlAlgos[i])
@@ -93,7 +96,9 @@ private:
 	}
 
 public:
-	TrialController(Slave* slave, Master* master, Config* config, Network* network, DB* db, array<cLabel*, 4> ratingLabels, array<Spring*, 4> springs, array<cLabel*, 4> algorithmLabels, cLabel* packetRateLabel)
+	TrialController(Slave* slave, Master* master, Config* config, Network* network, DB* db,
+	                array<cLabel*, 4> ratingLabels, array<Spring*, 4> springs, array<cLabel*, 4> algorithmLabels,
+	                cLabel* packetRateLabel, cLabel* delayLabel)
 		: m_slave(slave)
 		, m_master(master)
 		, m_network(network)
@@ -103,6 +108,7 @@ public:
 		, m_algorithmLabels(algorithmLabels)
 		, m_springs(springs)
 		, m_packetRateLabel(packetRateLabel)
+		, m_delayLabel(delayLabel)
 	{
 		initCurrentTrial();
 		initCurrentSubTrial();
