@@ -39,6 +39,7 @@ private:
 		if (m_useReference)
 		{
 			m_config->controlAlgorithm(ControlAlgorithm::None);
+			m_config->isRef(true);
 			m_master->packetRate(1000.0);
 			m_slave->packetRate(1000.0);
 			m_springs[subTrialIdx]->markReference();
@@ -46,6 +47,7 @@ private:
 		else
 		{
 			const auto controlAlgo = m_currentTrialInfo.controlAlgos[subTrialIdx];
+			m_config->isRef(false);
 			m_config->controlAlgorithm(controlAlgo);
 			m_master->packetRate(m_currentTrialInfo.packetRate);
 			m_slave->packetRate(m_currentTrialInfo.packetRate);

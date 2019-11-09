@@ -21,7 +21,7 @@ void Master::spin()
 		break;
 	}
 
-	if (SAVE_MSG_STREAM_TO_DB)
+	if (SAVE_MSG_STREAM_TO_DB && !m_config->isRef())
 	{
 		auto dbMsg = hapticMessageM2StoDbMsg(msgM2S);
 		db_insert_haptic_message_m2s(m_db, Device::Master, m_config->subTrialIdx(), dbMsg);
@@ -37,7 +37,7 @@ void Master::spin()
 	cVector3d force;
 	if (receivedNewMessage)
 	{
-		if (SAVE_MSG_STREAM_TO_DB)
+		if (SAVE_MSG_STREAM_TO_DB && !m_config->isRef())
 		{
 			auto dbMsg = hapticMessageS2MtoDbMsg(msgS2M);
 			db_insert_haptic_message_s2m(m_db, Device::Master, m_config->subTrialIdx(), dbMsg);

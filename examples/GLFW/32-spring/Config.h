@@ -11,6 +11,7 @@ class Config
 private:
 	ControlAlgorithm m_controlAlgorithm;
 	uint32_t m_subTrialIdx = 0;
+	bool m_isRef = false;
 public:
 	Config(): m_controlAlgorithm(ControlAlgorithm::None) {}
 
@@ -32,5 +33,15 @@ public:
 	uint32_t subTrialIdx() const
 	{
 		return m_subTrialIdx;
+	}
+
+	void isRef(bool yes)
+	{
+		m_isRef = yes;
+	}
+
+	bool isRef()
+	{
+		return m_isRef;
 	}
 };
