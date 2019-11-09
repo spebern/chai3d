@@ -14,6 +14,10 @@ struct Packet
 	chrono::high_resolution_clock::time_point arrivalTime;
 };
 
+/**
+ * \brief model of a channel that delivers messages with an optional delay
+ * \tparam T type of the messages sent through this channel
+ */
 template <typename T>
 class Channel
 {
@@ -22,8 +26,23 @@ private:
 	bool isFrontDue();
 	cMutex m_mu;
 public:
+	/**
+	 * \brief send a message through the channel
+	 * \param msg message to send  through the channel
+	 * \param delay delay of the message
+	 */
 	void send(T& msg, chrono::microseconds delay);
+
+	/**
+	 * \brief try to receive a message from the channel
+	 * \param msg destination of the message data if a new one was received
+	 * \return whether we received a new message or not
+	 */
 	bool tryReceive(T& msg);
+
+	/**
+	 * \brief clear all pending messages in the channel
+	 */
 	void clear();
 };
 
