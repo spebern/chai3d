@@ -149,7 +149,7 @@ public:
 		for (auto& rating: m_ratings)
 		{
 			if (rating == 0)
-				return false;
+				return true;
 		}
 		db_rate_trial(m_db, m_ratings.data(), m_ratings.size());
 
