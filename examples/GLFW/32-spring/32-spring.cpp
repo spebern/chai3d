@@ -427,9 +427,11 @@ void keyCallback(GLFWwindow* window, int key, int scancode, int action, int mods
 
 	switch (key)
 	{
+	case 83: // s
 	case KEY_DOWN:
 		trialController->nextSubTrial();
 		break;
+	case 87: //  w
 	case KEY_UP:
 		trialController->previousSubTrial();
 		break;
