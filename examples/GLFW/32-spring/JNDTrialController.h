@@ -9,10 +9,11 @@
 #include "haptic_db_ffi.h"
 #include "chai3d.h"
 #include "Config.h"
+#include "random"
 
 using namespace chai3d;
 
-class TrialController
+class JNDTrialController
 {
 private:
 	Slave* m_slave;
@@ -20,15 +21,11 @@ private:
 	Network* m_network;
 	DB* m_db;
 	Config* m_config;
-	array<cLabel*, 4> m_ratingLabels;
+	array<cLabel*, 4> m_packetRateLabels;
 	array<cLabel*, 4> m_algorithmLabels;
-	array<int32_t, 4> m_ratings;
+	array<int32_t, 4> m_packetRates;
 	array<Spring*, 4> m_springs;
-
-	cLabel* m_packetRateLabel;
-	cLabel* m_delayLabel;
-
-	TrialInfo m_currentTrialInfo;
+	vector<ControlAlgorithm> m_controlAlgos;
 
 	bool m_showingConfig = false;
 	bool m_useReference = false;
@@ -39,7 +36,6 @@ private:
 		if (m_useReference)
 		{
 			m_config->controlAlgorithm(ControlAlgorithm::None);
-			//m_network->delay(chrono::microseconds(0));
 			m_config->isRef(true);
 			m_master->packetRate(1000.0);
 			m_slave->packetRate(1000.0);
@@ -47,12 +43,11 @@ private:
 		}
 		else
 		{
-			const auto controlAlgo = m_currentTrialInfo.controlAlgos[subTrialIdx];
+			const auto controlAlgo = m_controlAlgos[subTrialIdx];
 			m_config->isRef(false);
-			//m_network->delay(chrono::microseconds(m_currentTrialInfo.delay * 1000));
 			m_config->controlAlgorithm(controlAlgo);
-			m_master->packetRate(m_currentTrialInfo.packetRate);
-			m_slave->packetRate(m_currentTrialInfo.packetRate);
+			m_master->packetRate(m_packetRates[subTrialIdx]);
+			m_slave->packetRate(m_packetRates[subTrialIdx]);
 			m_springs[subTrialIdx]->unmarkReference();
 		}
 		m_slave->spring(m_springs[subTrialIdx]);
@@ -60,28 +55,21 @@ private:
 
 	void initCurrentTrial()
 	{
-		m_currentTrialInfo = db_current_trial_info(m_db);
-		for (auto& ratingLabel: m_ratingLabels)
-			ratingLabel->setText("Rating: ");
-		for (auto& rating: m_ratings)
-			rating = 0;
+		for (auto i = 0; i < m_packetRates.size(); i++)
+			m_packetRateLabels[i]->setText("Packet rate: " + std::to_string(m_packetRates[i]));
 	}
 
 	void clearConfig()
 	{
-		m_packetRateLabel->setText("");
-		m_delayLabel->setText("");
 		for (auto& label : m_algorithmLabels)
 			label->setText("");
 	}
 
 	void showConfig() const
 	{
-		m_packetRateLabel->setText(std::to_string(m_currentTrialInfo.packetRate) + " Hz");
-		m_delayLabel->setText(std::to_string(m_currentTrialInfo.delay) + " ms");
 		for (auto i = 0; i < m_algorithmLabels.size(); i++)
 		{
-			switch (m_currentTrialInfo.controlAlgos[i])
+			switch (m_controlAlgos[i])
 			{
 			case ControlAlgorithm::None:
 				m_algorithmLabels[i]->setText("REF");
@@ -100,21 +88,27 @@ private:
 	}
 
 public:
-	TrialController(Slave* slave, Master* master, Config* config, Network* network, DB* db,
-	                array<cLabel*, 4> ratingLabels, array<Spring*, 4> springs, array<cLabel*, 4> algorithmLabels,
-	                cLabel* packetRateLabel, cLabel* delayLabel)
+	JNDTrialController(Slave* slave, Master* master, Config* config, Network* network, DB* db,
+	                array<cLabel*, 4> packetRateLabels, array<Spring*, 4> springs, array<cLabel*, 4> algorithmLabels )
 		: m_slave(slave)
 		, m_master(master)
 		, m_network(network)
 		, m_db(db)
 		, m_config(config)
-		, m_ratingLabels(ratingLabels)
+		, m_packetRateLabels(packetRateLabels)
 		, m_algorithmLabels(algorithmLabels)
 		, m_springs(springs)
-		, m_packetRateLabel(packetRateLabel)
-		, m_delayLabel(delayLabel)
 	{
-		clearConfig();
+		m_controlAlgos.push_back(ControlAlgorithm::None);
+		m_controlAlgos.push_back(ControlAlgorithm::WAVE);
+		m_controlAlgos.push_back(ControlAlgorithm::ISS);
+		m_controlAlgos.push_back(ControlAlgorithm::PC);
+		for (auto i = 0; i < 4; i ++)
+		{
+			m_packetRates[i] = 30;
+		}
+		shuffle(m_controlAlgos.begin(), m_controlAlgos.end(), std::default_random_engine());
+
 		initCurrentTrial();
 		initCurrentSubTrial();
 	}
@@ -140,32 +134,12 @@ public:
 		initCurrentSubTrial();
 	}
 
-	void rate(const int32_t rating)
+	void submitJNDs()
 	{
-		const auto subTrialIdx = m_config->subTrialIdx();
-		m_ratingLabels[subTrialIdx]->setText("Rating: " + std::to_string(rating));
-		m_ratings[subTrialIdx] = rating;
-	}
-
-	bool submitRatings()
-	{
-		for (auto& rating: m_ratings)
+		for (auto i = 0; i < 4; i++)
 		{
-			if (rating == 0)
-				return true;
+			db_save_jnd(m_db, m_controlAlgos[i], m_packetRates[i]);
 		}
-		db_rate_trial(m_db, m_ratings.data(), m_ratings.size());
-
-		// move to the next trial if there is one left
-		const auto trialLeft = db_next_trial(m_db);
-		if (!trialLeft)
-			return false;
-		clearConfig();
-		initCurrentTrial();
-		initCurrentSubTrial();
-		if (m_showingConfig)
-			showConfig();
-		return true;
 	}
 
 	void toggleConfig()
@@ -194,5 +168,25 @@ public:
 			m_useReference = true;
 			initCurrentSubTrial();
 		}
+	}
+
+	void decreasePacketRate()
+	{
+		const auto subTrialIdx = m_config->subTrialIdx();
+		m_packetRates[subTrialIdx] = max(30.0, m_packetRates[subTrialIdx] - 5.0);
+		m_packetRateLabels[subTrialIdx]->setText(
+			"Packet rate: " + std::to_string(m_packetRates[subTrialIdx])
+		);
+		initCurrentSubTrial();
+	}
+
+	void increasePacketRate()
+	{
+		const auto subTrialIdx = m_config->subTrialIdx();
+		m_packetRates[subTrialIdx] = min(1000.0, m_packetRates[subTrialIdx] + 5.0);
+		m_packetRateLabels[subTrialIdx]->setText(
+			"Packet rate: " + std::to_string(m_packetRates[subTrialIdx])
+		);
+		initCurrentSubTrial();
 	}
 };

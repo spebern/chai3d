@@ -11,6 +11,7 @@
 #include "haptic_db_ffi.h"
 #include "vector"
 #include "TrialController.h"
+#include "JNDTrialController.h"
 
 using namespace chai3d;
 using namespace std;
@@ -106,6 +107,9 @@ DB* db;
 // controller for the trial (4 springs and their current rating)
 TrialController* trialController;
 
+// controller for evaluating jnds of the subject
+JNDTrialController* jndTrialController;
+
 // remote environment controlled by the master
 Slave* slave;
 
@@ -130,7 +134,10 @@ void windowSizeCallback(GLFWwindow* window, int width, int height);
 void errorCallback(int error, const char* description);
 
 // callback when a key is pressed
-void keyCallback(GLFWwindow* window, int key, int scancode, int action, int mods);
+void keyCallbackJND(GLFWwindow* window, int key, int scancode, int action, int mods);
+
+// callback when a key is pressed
+void keyCallbackTrials(GLFWwindow* window, int key, int scancode, int action, int mods);
 
 // this function renders the scene
 void updateGraphics();
@@ -195,7 +202,7 @@ void initOpenGL()
 	glfwGetWindowSize(window, &width, &height);
 	glfwSetWindowPos(window, x, y);
 
-	glfwSetKeyCallback(window, keyCallback);
+	glfwSetKeyCallback(window, keyCallbackJND);
 
 	glfwSetWindowSizeCallback(window, windowSizeCallback);
 
@@ -387,7 +394,8 @@ int main(int argc, char* argv[])
 	network = new Network(delay, varDelay);
 	master = new Master(network, hapticDevice, config, db);
 	slave = new Slave(network, springs[0], config, toolTip, db, info.m_maxLinearStiffness);
-	trialController = new TrialController(slave, master, config, network, db, ratingLabels, springs, algorithmLabels, packetRateLabel, delayLabel);
+
+	jndTrialController = new JNDTrialController(slave, master, config, network, db, ratingLabels, springs, algorithmLabels);
 
 	// create a thread which starts the main haptics rendering loop
 	hapticsThread = new cThread();
@@ -427,7 +435,47 @@ void errorCallback(int error, const char* description)
 	cout << "Error: " << description << endl;
 }
 
-void keyCallback(GLFWwindow* window, int key, int scancode, int action, int mods)
+void keyCallbackJND(GLFWwindow* window, int key, int scancode, int action, int mods)
+{
+    if ((action != GLFW_PRESS) && (action != GLFW_REPEAT))
+        return;
+
+	switch (key)
+	{
+	case 83: // s
+	case KEY_DOWN:
+		jndTrialController->nextSubTrial();
+		break;
+	case 87: //  w
+	case KEY_UP:
+		jndTrialController->previousSubTrial();
+		break;
+		break;
+	case 65: //  a
+	case KEY_LEFT:
+		jndTrialController->decreasePacketRate();
+		break;
+	case 68: //  d
+	case KEY_RIGHT:
+		jndTrialController->increasePacketRate();
+		break;
+	case 257: // enter
+	{
+		trialController = new TrialController(slave, master, config, network, db, ratingLabels, springs, algorithmLabels, packetRateLabel, delayLabel);
+		glfwSetKeyCallback(window, keyCallbackTrials);
+	}
+	case 86: // 'v'
+		jndTrialController->toggleConfig();
+		break;
+	case 82: // '3'
+		jndTrialController->toggleReference();
+		break;
+	default: ;
+		std::cout << "unused key " << key << std::endl;
+	}
+}
+
+void keyCallbackTrials(GLFWwindow* window, int key, int scancode, int action, int mods)
 {
     if ((action != GLFW_PRESS) && (action != GLFW_REPEAT))
         return;
