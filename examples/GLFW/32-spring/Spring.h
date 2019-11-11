@@ -1,6 +1,7 @@
 #pragma once
 
 #include "chai3d.h"
+#include "Config.h"
 
 using namespace std;
 using namespace chai3d;
@@ -16,7 +17,7 @@ private:
 	cVector3d m_initialPos;
 public:
 	explicit Spring(const cVector3d pos)
-		: m_k(300.0)
+		: m_k(SPRING_K)
 		, m_length(0.3)
 		, m_width(0.05)
 		, m_animation(nullptr)

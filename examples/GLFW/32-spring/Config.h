@@ -4,6 +4,8 @@
 
 #define DT 0.001
 
+#define SPRING_K 800.0
+
 #define WAVE_B 0.5
 
 #define ISS_TAU          0.005
