@@ -39,6 +39,7 @@ private:
 		if (m_useReference)
 		{
 			m_config->controlAlgorithm(ControlAlgorithm::None);
+			//m_network->delay(chrono::microseconds(0));
 			m_config->isRef(true);
 			m_master->packetRate(1000.0);
 			m_slave->packetRate(1000.0);
@@ -48,6 +49,7 @@ private:
 		{
 			const auto controlAlgo = m_currentTrialInfo.controlAlgos[subTrialIdx];
 			m_config->isRef(false);
+			//m_network->delay(chrono::microseconds(m_currentTrialInfo.delay * 1000));
 			m_config->controlAlgorithm(controlAlgo);
 			m_master->packetRate(m_currentTrialInfo.packetRate);
 			m_slave->packetRate(m_currentTrialInfo.packetRate);

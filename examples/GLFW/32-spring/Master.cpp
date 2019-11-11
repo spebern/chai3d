@@ -14,7 +14,7 @@ void Master::spin()
 	switch (controlAlgorithm)
 	{
 	case ControlAlgorithm::WAVE:
-		msgM2S.vel = m_wave.calculateUm(vel, m_prevForce);
+		msgM2S.vel = m_wave.calculateUm(vel);
 		break;
 	default:
 		msgM2S.vel = vel;
@@ -46,19 +46,19 @@ void Master::spin()
 		switch (controlAlgorithm)
 		{
 		case ControlAlgorithm::WAVE:
-			force = m_wave.calculateFm(vel, msgS2M.force);
+			m_wave.vm(msgS2M.force);
+			force = m_wave.calculateForce(vel);
 			break;
 		default:
 			force = msgS2M.force;
 			break;
 		}
-		force = limitForce(force);
-		m_hapticDevice->setForce(force);
-		m_prevForce = force;
+		m_force = force;
+		m_hapticDevice->setForce(limitForce(m_force));
 	}
 	else
 	{
-		m_hapticDevice->setForce(m_prevForce);
+		m_hapticDevice->setForce(limitForce(m_force));
 	}
 }
 

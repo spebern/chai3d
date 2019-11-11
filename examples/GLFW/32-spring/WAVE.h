@@ -1,43 +1,56 @@
 #pragma once
 
 #include "chai3d.h"
+#include "Config.h"
 
 using namespace chai3d;
 
-class WAVE
+class WAVEMaster {
+private:
+	double m_b;
+	cVector3d m_vm;
+public:
+	explicit WAVEMaster(const double b = WAVE_B) : m_vm(0, 0, 0), m_b(b) {}
+	
+	void vm(const cVector3d vm)
+	{
+		m_vm = vm;
+	}
+
+	//cVector3d calculateUm(cVector3d& vel, cVector3d& force) const
+	cVector3d calculateUm(cVector3d& vel) const
+	{
+		// return (m_b * vel + force) / sqrt(2.0 * m_b);
+		return sqrt(2.0 * m_b) * vel - m_vm;
+	}
+
+	cVector3d calculateForce(cVector3d& vel) const
+	{
+		return m_b * vel - sqrt(2.0 * m_b) * m_vm;
+	}
+};
+
+class WAVESlave
 {
 private:
 	double m_b;
+	cVector3d m_us;
+
 public:
-	explicit WAVE(const double b = 3.0): m_b(b) {}
+	explicit WAVESlave(const double b = WAVE_B) : m_us(0, 0, 0), m_b(b) {}
 
-	cVector3d calculateUm(cVector3d& velM, cVector3d& forceM) const
+	void us(const cVector3d& us)
 	{
-		return (m_b * velM + forceM) / sqrt(2.0 * m_b);
+		m_us = us;
 	}
 
-	cVector3d calculateVs(cVector3d& velS, cVector3d& forceS) const
+	cVector3d calculateVel(cVector3d& force) const
 	{
-		return (m_b * velS - forceS) / sqrt(2.0 * m_b);
+		return sqrt(2.0 / m_b) * m_us - (1.0 / m_b) * force;
 	}
 
-	cVector3d calculateVelM(cVector3d& vm, cVector3d& forceM) const
+	cVector3d calculateVs(cVector3d& force) const
 	{
-		return sqrt(2.0 / m_b) * vm + 1.0 / m_b * forceM;
-	}
-
-	cVector3d calculateVelS(cVector3d& us, cVector3d& forceS) const
-	{
-		return sqrt(2.0 / m_b) * us - 1.0 / m_b * forceS;
-	}
-
-	cVector3d calculateFm(cVector3d& velM, cVector3d& vm) const
-	{
-		return m_b * velM - sqrt(2.0 * m_b) * vm;
-	}
-
-	cVector3d calculateFs(cVector3d& velS, cVector3d& us) const
-	{
-		return -m_b * velS + sqrt(2.0 * m_b) * us;
+		return m_us - sqrt(2.0 / m_b) * force;
 	}
 };

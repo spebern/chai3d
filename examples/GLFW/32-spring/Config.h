@@ -3,6 +3,7 @@
 #define SAVE_MSG_STREAM_TO_DB 1
 
 #define DT 0.001
+#define WAVE_B 0.5
 
 #include "haptic_db_ffi.h"
 

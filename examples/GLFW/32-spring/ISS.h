@@ -10,32 +10,21 @@ class ISS
 {
 private:
 	double m_tau;
-	double m_muMax = 0.0;
-	double m_muMaxScale;
+	double m_muMax;
 public:
-	explicit ISS(const double tau = 0.03, const double muMaxScale = 1.7)
+	explicit ISS(const double maxStiffness, const double muMaxScale = 1.7,  const double tau = 0.005)
 		: m_tau(tau)
-		, m_muMaxScale(muMaxScale)
+		, m_muMax(maxStiffness / 3.0 * muMaxScale)
 	{
 	}
 
-	cVector3d calculateForce(const cVector3d& force, const cVector3d& dForce) const
+	cVector3d calculateForce(const cVector3d& force, const cVector3d& prevForce) const
 	{
-		return force + m_tau * dForce;
+		return force + m_tau * (force - prevForce) / DT;
 	}
 
-	cVector3d calculateVel(const cVector3d& vel, const cVector3d& dForce) const
+	cVector3d calculateVel(const cVector3d& vel, const cVector3d& force, const cVector3d& prevForce) const
 	{
-		if (m_muMax == 0.0)
-			return vel;
-		else
-			return vel - dForce / m_muMax;
-	}
-
-	void updateMuMax(const cVector3d& force, const cVector3d& const prevForce, const cVector3d& pos, const cVector3d& prevPos)
-	{
-		const auto muMax = m_muMaxScale * (force - prevForce).length() / (pos - prevPos).length();
-		if (muMax > m_muMax)
-			m_muMax = muMax;
+		return vel - (force - prevForce) / DT / m_muMax;
 	}
 };

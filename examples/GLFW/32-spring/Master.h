@@ -23,8 +23,9 @@ private:
 	cVector3d m_prevPos;
 	cVector3d m_prevForce;
 
-	WAVE m_wave;
-	ISS m_iss;
+	cVector3d m_force;
+
+	WAVEMaster m_wave;
 
 	DB* m_db;
 public:
@@ -33,7 +34,7 @@ public:
 		, m_hapticDevice(hapticDevice)
 		, m_config(config)
 		, m_prevPos(0, 0, 0)
-		, m_prevForce(0, 0, 0)
+		, m_force(0, 0, 0)
 		, m_db(db)
 	{
 	}
@@ -44,7 +45,7 @@ public:
 
 	static cVector3d limitForce(cVector3d& force)
 	{
-		return force.length() > 10.0 ? force / force.length() * 10.0 : force;
+		return force.length() > 6.0 ? force / force.length() * 6.0 : force;
 	}
 
 	void packetRate(const double rate)

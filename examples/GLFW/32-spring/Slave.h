@@ -20,11 +20,11 @@ private:
 	Network* m_network;
 	Spring* m_spring;
 	PDController m_pdController;
+	PIDController m_pidController;
 	RateLimiter m_packetRateLimiter;
 	Config* m_config;
 
-	double m_mass = 0.1; // [g]
-	double m_damping = 0.04;
+	double m_mass = 0.04; // [g]
 
 	int64_t m_sequenceNumber = 0;
 
@@ -41,13 +41,13 @@ private:
 
 	ToolTip* m_toolTip;
 
-	WAVE m_wave;
+	WAVESlave m_wave;
 	PassivityControl m_passivityControl;
 	ISS m_iss;
 
 	DB* m_db;
 public:
-	Slave(Network* network, Spring* spring, Config* config, ToolTip* toolTip, DB* db)
+	Slave(Network* network, Spring* spring, Config* config, ToolTip* toolTip, DB* db, const double maxStiffness)
 		: m_network(network)
 		, m_spring(spring)
 		, m_config(config)
@@ -60,6 +60,7 @@ public:
 		, m_prevForce(0, 0, 0)
 		, m_force(0, 0, 0)
 		, m_toolTip(toolTip)
+		, m_iss(maxStiffness)
 		, m_db(db)
 	{
 	}
@@ -84,11 +85,6 @@ public:
 	void decreasePacketRate(const double dRate)
 	{
 		m_packetRateLimiter.decreaseRate(dRate);
-	}
-
-	cVector3d dForce() const
-	{
-		return (m_force - m_prevForce) / DT;
 	}
 
 	cVector3d dVel() const

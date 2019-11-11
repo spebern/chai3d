@@ -16,7 +16,7 @@ private:
 	cVector3d m_initialPos;
 public:
 	explicit Spring(const cVector3d pos)
-		: m_k(800.0)
+		: m_k(300.0)
 		, m_length(0.3)
 		, m_width(0.05)
 		, m_animation(nullptr)
@@ -43,7 +43,8 @@ public:
 		auto newPos = m_initialPos;
 		newPos.y(m_initialPos.y() + indention);
 		m_animation->setLocalPos(newPos);
-		const auto force = m_k * pow(indention, 1.5) + vel.y() * pow(indention, 1.5) * 0.5;
+		//const auto force = m_k * pow(indention, 1.5) + vel.y() * pow(indention, 1.5) * 0.5;
+		const auto force = m_k * indention;
 		return cVector3d(0, -force, 0);
 	}
 

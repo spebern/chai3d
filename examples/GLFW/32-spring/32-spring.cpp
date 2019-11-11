@@ -73,7 +73,6 @@ GLFWwindow* window = nullptr;
 // springs the haptic device interacts with
 array<Spring*, 4> springs;
 
-
 // rating labels displaying the quality of the haptic feedback
 array<cLabel*, 4> ratingLabels;
 
@@ -360,9 +359,17 @@ int main(int argc, char* argv[])
 	db = db_new();
 
 	vector<int32_t> packetRates;
-	packetRates.push_back(10);
-	packetRates.push_back(50);
-	packetRates.push_back(100);
+	//packetRates.push_back(10);
+	//packetRates.push_back(15);
+	//packetRates.push_back(20);
+	//packetRates.push_back(25);
+	packetRates.push_back(1000);
+	//packetRates.push_back(35);
+	//packetRates.push_back(40);
+	//packetRates.push_back(45);
+	//packetRates.push_back(50);
+	//packetRates.push_back(60);
+	//packetRates.push_back(70);
 
 	const auto nickname = readNickname();
 	const auto age = readAge();
@@ -379,7 +386,7 @@ int main(int argc, char* argv[])
 	config = new Config();
 	network = new Network(delay, varDelay);
 	master = new Master(network, hapticDevice, config, db);
-	slave = new Slave(network, springs[0], config, toolTip, db);
+	slave = new Slave(network, springs[0], config, toolTip, db, info.m_maxLinearStiffness);
 	trialController = new TrialController(slave, master, config, network, db, ratingLabels, springs, algorithmLabels, packetRateLabel, delayLabel);
 
 	// create a thread which starts the main haptics rendering loop
@@ -436,10 +443,12 @@ void keyCallback(GLFWwindow* window, int key, int scancode, int action, int mods
 		trialController->previousSubTrial();
 		break;
 	case KEY_LEFT:
-		// network->decreaseDelay(chrono::microseconds(1000));
+		network->decreaseDelay(chrono::microseconds(1000));
+		std::cout << chrono::duration_cast<chrono::milliseconds>(network->delay()).count() << std::endl;
 		break;
 	case KEY_RIGHT:
-		// network->increaseDelay(chrono::microseconds(1000));
+		network->increaseDelay(chrono::microseconds(1000));
+		std::cout << chrono::duration_cast<chrono::milliseconds>(network->delay()).count() << std::endl;
 		break;
 	case '1':
 		trialController->rate(1);
@@ -525,6 +534,13 @@ void updateHaptics()
 {
 	simulationRunning = true;
 	simulationFinished = false;
+
+	for (auto i = 0; i < 200; i++)
+	{
+		cVector3d ignore;
+		hapticDevice->getPosition(ignore);
+		hapticDevice->getLinearVelocity(ignore);
+	}
 
 	while (simulationRunning)
 	{
