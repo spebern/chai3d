@@ -11,7 +11,7 @@ private:
 	double m_kP;
 	double m_kD;
 public:
-	explicit PDController(const double kP = 300.0, const double kD = 1.5): m_kP(kP), m_kD(kD)
+	explicit PDController(const double kP = PD_KP, const double kD = PD_KD): m_kP(kP), m_kD(kD)
 	{
 	}
 
@@ -29,7 +29,7 @@ class PIDController
 	cVector3d m_integralError;
 	cVector3d m_prevError;
 public:
-	explicit PIDController(const double kP = 300.0, const double kI = 1.0, const double kD = 1.5)
+	explicit PIDController(const double kP = PID_KP, const double kI = PID_KI, const double kD = PID_KD)
 		: m_kP(kP)
 		, m_kI(kI)
 		, m_kD(kD)
