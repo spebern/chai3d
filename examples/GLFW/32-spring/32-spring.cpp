@@ -461,6 +461,7 @@ void keyCallbackJND(GLFWwindow* window, int key, int scancode, int action, int m
 		break;
 	case 257: // enter
 	{
+		jndTrialController->submitJNDs();
 		trialController = new TrialController(slave, master, config, network, db, ratingLabels, springs, algorithmLabels, packetRateLabel, delayLabel);
 		glfwSetKeyCallback(window, keyCallbackTrials);
 	}
