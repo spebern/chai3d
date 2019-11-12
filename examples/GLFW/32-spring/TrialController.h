@@ -17,16 +17,7 @@ class TrialController: public Controller
 {
 private:
 	array<int32_t, 4> m_ratings;
-public:
-	TrialController(Slave* slave, Master* master, Config* config, Network* network, DB* db,
-		const array<cLabel*, 4>& sideLabels, const array<Spring*, 4>& springs, const array<cLabel*, 4>& algorithmLabels,
-		cLabel* packetRateLabel, cLabel* delayLabel)
-		: Controller(slave, master, config, network, db, sideLabels, springs, algorithmLabels, packetRateLabel, delayLabel)
-	{
-		initCurrentTrial();
-	}
 
-private:
 	void initCurrentTrial()
 	{
 		auto currentTrialInfo = db_current_trial_info(m_db);
@@ -67,31 +58,55 @@ private:
 	}
 
 public:
-	void rate(const int32_t rating)
+	TrialController(Slave* slave, Master* master, Config* config, Network* network, DB* db,
+		const array<cLabel*, 4>& sideLabels, const array<Spring*, 4>& springs, const array<cLabel*, 4>& algorithmLabels,
+		cLabel* packetRateLabel, cLabel* delayLabel)
+		: Controller(slave, master, config, network, db, sideLabels, springs, algorithmLabels, packetRateLabel, delayLabel)
 	{
-		const auto subTrialIdx = m_config->subTrialIdx();
-		m_sideLabels[subTrialIdx]->setText("Rating: " + std::to_string(rating));
-		m_ratings[subTrialIdx] = rating;
 	}
 
-	bool submitRatings()
+	void init() override
+	{
+		initCurrentTrial();
+		m_master->packetRate(m_trialConfig.subTrialConfigs[0].packetRate);
+		m_slave->packetRate(m_trialConfig.subTrialConfigs[0].packetRate);
+	}
+
+	void rightKey() override
+	{
+		const auto subTrialIdx = m_config->subTrialIdx();
+		auto const rating = min(5, m_ratings[subTrialIdx] + 1);
+		m_ratings[subTrialIdx] = rating;
+		m_sideLabels[subTrialIdx]->setText("Rating: " + std::to_string(rating));
+	}
+
+	void leftKey() override
+	{
+		const auto subTrialIdx = m_config->subTrialIdx();
+		auto const rating = max(1, m_ratings[subTrialIdx] - 1);
+		m_ratings[subTrialIdx] = rating;
+		m_sideLabels[subTrialIdx]->setText("Rating: " + std::to_string(rating));
+	}
+
+	bool saveToDb() override
 	{
 		for (auto& rating: m_ratings)
 		{
 			if (rating == 0)
-				return true;
+				return false;
 		}
 		db_rate_trial(m_db, m_ratings.data(), m_ratings.size());
 
 		// move to the next trial if there is one left
 		const auto trialLeft = db_next_trial(m_db);
 		if (!trialLeft)
-			return false;
+			return true;
 		clearConfig();
 		initCurrentTrial();
 		initCurrentSubTrial();
+		std::cout << m_showingConfig << std::endl;
 		if (m_showingConfig)
 			showConfig();
-		return true;
+		return false;
 	}
 };

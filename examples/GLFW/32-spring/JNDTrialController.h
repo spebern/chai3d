@@ -32,7 +32,6 @@ private:
 		for (auto& label : m_algorithmLabels)
 			label->setText("");
 	}
-
 	
 	void showConfig() override
 	{
@@ -76,16 +75,23 @@ public:
 			m_trialConfig.subTrialConfigs[i].controlAlgorithm = controlAlgorithms[i];
 			m_trialConfig.subTrialConfigs[i].packetRate = 30.0;
 		}
-		initCurrentTrial();
 	}
 
-	void submitJNDs()
+	void init() override
+	{
+		initCurrentTrial();
+		m_master->packetRate(m_trialConfig.subTrialConfigs[0].packetRate);
+		m_slave->packetRate(m_trialConfig.subTrialConfigs[0].packetRate);
+	}
+
+	bool saveToDb() override
 	{
 		for (auto& subTrialConfig: m_trialConfig.subTrialConfigs)
 			db_save_jnd(m_db, subTrialConfig.controlAlgorithm, subTrialConfig.packetRate);
+		return true;
 	}
 
-	void decreasePacketRate()
+	void leftKey() override
 	{
 		const auto subTrialIdx = m_config->subTrialIdx();
 		const auto oldPacketRate = m_trialConfig.subTrialConfigs[subTrialIdx].packetRate;
@@ -97,7 +103,7 @@ public:
 		initCurrentSubTrial();
 	}
 
-	void increasePacketRate()
+	void rightKey() override
 	{
 		const auto subTrialIdx = m_config->subTrialIdx();
 		const auto oldPacketRate = m_trialConfig.subTrialConfigs[subTrialIdx].packetRate;
