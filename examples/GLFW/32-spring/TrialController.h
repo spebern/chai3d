@@ -28,7 +28,7 @@ private:
 			m_trialConfig.subTrialConfigs[i].packetRate = currentTrialInfo.packetRate;
 		}
 		for (auto& ratingLabel: m_sideLabels)
-			ratingLabel->setText("Rating: ");
+			ratingLabel->setText("Rating: 0");
 		for (auto& rating: m_ratings)
 			rating = 0;
 	}
