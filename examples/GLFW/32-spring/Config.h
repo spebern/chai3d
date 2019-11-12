@@ -12,7 +12,7 @@
 #define ISS_MU_MAX_SCALE 1.0
 
 #define PD_KP 300.0
-#define PD_KD 3.0
+#define PD_KD 0.5
 
 #define PID_KP  300.0
 #define PID_KD  3.0
