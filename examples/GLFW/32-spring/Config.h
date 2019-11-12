@@ -9,7 +9,7 @@
 #define WAVE_B 0.5
 
 #define ISS_TAU          0.005
-#define ISS_MU_MAX_SCALE 1.7
+#define ISS_MU_MAX_SCALE 1.0
 
 #define PD_KP 300.0
 #define PD_KD 3.0
