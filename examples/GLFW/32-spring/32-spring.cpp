@@ -395,7 +395,8 @@ int main(int argc, char* argv[])
 	master = new Master(network, hapticDevice, config, db);
 	slave = new Slave(network, springs[0], config, toolTip, db, info.m_maxLinearStiffness);
 
-	jndTrialController = new JNDTrialController(slave, master, config, network, db, ratingLabels, springs, algorithmLabels);
+	jndTrialController = new JNDTrialController(slave, master, config, network, db, ratingLabels, springs,
+	                                            algorithmLabels, packetRateLabel, delayLabel);
 
 	// create a thread which starts the main haptics rendering loop
 	hapticsThread = new cThread();
@@ -462,7 +463,8 @@ void keyCallbackJND(GLFWwindow* window, int key, int scancode, int action, int m
 	case 257: // enter
 	{
 		jndTrialController->submitJNDs();
-		trialController = new TrialController(slave, master, config, network, db, ratingLabels, springs, algorithmLabels, packetRateLabel, delayLabel);
+		trialController = new TrialController(slave, master, config, network, db, ratingLabels, springs,
+		                                      algorithmLabels, packetRateLabel, delayLabel);
 		glfwSetKeyCallback(window, keyCallbackTrials);
 	}
 	case 86: // 'v'
