@@ -366,17 +366,12 @@ int main(int argc, char* argv[])
 	db = db_new();
 
 	vector<int32_t> packetRates;
-	//packetRates.push_back(10);
-	//packetRates.push_back(15);
-	//packetRates.push_back(20);
-	//packetRates.push_back(25);
-	packetRates.push_back(1000);
-	//packetRates.push_back(35);
-	//packetRates.push_back(40);
-	//packetRates.push_back(45);
-	//packetRates.push_back(50);
-	//packetRates.push_back(60);
-	//packetRates.push_back(70);
+	packetRates.push_back(15);
+	packetRates.push_back(30);
+	packetRates.push_back(50);
+	packetRates.push_back(70);
+	packetRates.push_back(90);
+	packetRates.push_back(130);
 
 	const auto nickname = readNickname();
 	const auto age = readAge();
