@@ -109,4 +109,11 @@ public:
 			showConfig();
 		return false;
 	}
+
+	void rate(int32_t rating) override
+	{
+		const auto subTrialIdx = m_config->subTrialIdx();
+		m_ratings[subTrialIdx] = rating;
+		m_sideLabels[subTrialIdx]->setText("Rating: " + std::to_string(rating));
+	}
 };

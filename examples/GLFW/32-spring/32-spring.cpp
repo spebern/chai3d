@@ -487,6 +487,21 @@ void keyCallback(GLFWwindow* window, int key, int scancode, int action, int mods
 	case 82: // '3'
 		controller->toggleReference();
 		break;
+	case '1':
+		controller->rate(1);
+		break;
+	case '2':
+		controller->rate(2);
+		break;
+	case '3':
+		controller->rate(3);
+		break;
+	case '4':
+		controller->rate(4);
+		break;
+	case '5':
+		controller->rate(5);
+		break;
 	default: ;
 		std::cout << "unused key " << key << std::endl;
 	}
