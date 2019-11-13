@@ -95,7 +95,7 @@ public:
 	{
 		const auto subTrialIdx = m_config->subTrialIdx();
 		const auto oldPacketRate = m_trialConfig.subTrialConfigs[subTrialIdx].packetRate;
-		const auto newPacketRate = max(30.0, oldPacketRate - 5.0);
+		const auto newPacketRate = max(30.0, oldPacketRate - 10.0);
 		m_trialConfig.subTrialConfigs[subTrialIdx].packetRate = newPacketRate;
 		m_sideLabels[subTrialIdx]->setText(
 			"Packet rate: " + std::to_string(int64_t(newPacketRate))
@@ -107,7 +107,7 @@ public:
 	{
 		const auto subTrialIdx = m_config->subTrialIdx();
 		const auto oldPacketRate = m_trialConfig.subTrialConfigs[subTrialIdx].packetRate;
-		const auto newPacketRate = min(1000.0, oldPacketRate + 5.0);
+		const auto newPacketRate = min(250.0, oldPacketRate + 10.0);
 		m_trialConfig.subTrialConfigs[subTrialIdx].packetRate = newPacketRate;
 		m_sideLabels[subTrialIdx]->setText(
 			"Packet rate: " + std::to_string(int64_t(newPacketRate))
