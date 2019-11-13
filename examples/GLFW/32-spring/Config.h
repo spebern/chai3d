@@ -25,7 +25,7 @@ class Config
 private:
 	ControlAlgorithm m_controlAlgorithm;
 	uint32_t m_subTrialIdx = 0;
-	bool m_isRef = false;
+	bool m_shouldRecord = false;
 public:
 	Config(): m_controlAlgorithm(ControlAlgorithm::None) {}
 
@@ -49,13 +49,13 @@ public:
 		return m_subTrialIdx;
 	}
 
-	void isRef(bool yes)
+	void shouldRecord(const bool yes)
 	{
-		m_isRef = yes;
+		m_shouldRecord = yes;
 	}
 
-	bool isRef()
+	bool shouldRecord() const
 	{
-		return m_isRef;
+		return m_shouldRecord;
 	}
 };

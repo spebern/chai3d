@@ -19,6 +19,7 @@ class JNDTrialController: public Controller
 private:
 	void initCurrentTrial()
 	{
+		m_trialConfig.shouldRecord = false;
 		for (auto i = 0; i < 4; i++)
 		{
 			const auto packetRate = m_trialConfig.subTrialConfigs[i].packetRate;

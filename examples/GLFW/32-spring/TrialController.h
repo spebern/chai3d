@@ -22,6 +22,7 @@ private:
 	{
 		auto currentTrialInfo = db_current_trial_info(m_db);
 		m_trialConfig.delay = currentTrialInfo.delay;
+		m_trialConfig.shouldRecord = true;
 		for (auto i = 0; i < 4; i++)
 		{
 			m_trialConfig.subTrialConfigs[i].controlAlgorithm = currentTrialInfo.controlAlgos[i];
