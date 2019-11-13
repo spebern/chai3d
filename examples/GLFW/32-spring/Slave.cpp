@@ -42,7 +42,7 @@ void Slave::spin()
 
 	m_prevVel = m_vel;
 	m_vel += acceleration * DT;
-	m_vel *= 0.996;
+	m_vel *= (1 - m_damping);
 
 	m_prevPos = m_pos;
 	m_pos += m_vel * DT;

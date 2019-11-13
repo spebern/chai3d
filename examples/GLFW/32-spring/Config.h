@@ -18,6 +18,9 @@
 #define PID_KD  3.0
 #define PID_KI  1.0
 
+#define SLAVE_MASS    0.04
+#define SLAVE_DAMPING 0.04
+
 #include "haptic_db_ffi.h"
 
 class Config

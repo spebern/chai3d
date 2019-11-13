@@ -11,6 +11,7 @@
 #include "ISS.h"
 #include "ToolTip.h"
 #include "haptic_db_ffi.h"
+#include "Config.h"
 
 using namespace chai3d;
 
@@ -25,6 +26,7 @@ private:
 	Config* m_config;
 
 	double m_mass = 0.04; // [g]
+	double m_damping;
 
 	int64_t m_sequenceNumber = 0;
 
@@ -47,10 +49,13 @@ private:
 
 	DB* m_db;
 public:
-	Slave(Network* network, Spring* spring, Config* config, ToolTip* toolTip, DB* db, const double maxStiffness)
+	Slave(Network* network, Spring* spring, Config* config, ToolTip* toolTip, DB* db, const double maxStiffness,
+	      const double mass = SLAVE_MASS, const double damping = SLAVE_DAMPING)
 		: m_network(network)
 		, m_spring(spring)
 		, m_config(config)
+		, m_mass(mass)
+		, m_damping(damping)
 		, m_posRef(0, 0, 0)
 		, m_pos(0, 0, 0)
 		, m_prevPos(0, 0, 0)
