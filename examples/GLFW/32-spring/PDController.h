@@ -36,15 +36,25 @@ public:
 	{
 	}
 
-	cVector3d calculateForce(cVector3d& posRef, cVector3d& pos) 
+	cVector3d calculateForce(cVector3d& posRef, cVector3d& pos, cVector3d& velRef, cVector3d& vel) 
 	{
 		const auto error = posRef - pos;
 		m_integralError += error * DT;
 		const auto compP = error * m_kP;
 		const auto compI = m_integralError * m_kI;
-		const auto compD = ((error - m_prevError) / DT) * m_kD;
+		const auto compD = (velRef - vel) * m_kD;
 		m_prevError = error;
 		return compP + compI + compD;
 	}
 
+	cVector3d calculateForce(cVector3d& posRef, cVector3d& pos)
+	{
+		const auto error = posRef - pos;
+		m_integralError += error * DT;
+		const auto compP = error * m_kP;
+		const auto compI = m_integralError * m_kI;
+		const auto compD = (error - m_prevError) / DT * m_kD;
+		m_prevError = error;
+		return compP + compI + compD;
+	}
 };
