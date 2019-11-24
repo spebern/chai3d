@@ -12,10 +12,11 @@ private:
 	double m_k;
 	double m_length;
 	double m_width;
-	cShapeBox* m_animation;
 
 	cVector3d m_initialPos;
 public:
+	cShapeBox* m_animation;
+
 	explicit Spring(const cVector3d pos)
 		: m_k(SPRING_K)
 		, m_length(0.3)
@@ -82,5 +83,10 @@ public:
 	void unmarkReference() const
 	{
 		m_animation->m_material->setWhite();
+	}
+
+	void initialPos(cVector3d& pos)
+	{
+		m_initialPos = pos;
 	}
 };

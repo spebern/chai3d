@@ -16,45 +16,55 @@ using namespace chai3d;
 class TrialController: public Controller
 {
 private:
-	array<int32_t, 4> m_ratings;
+	Trial m_trial;
 
 	void initCurrentTrial()
 	{
-		auto currentTrialInfo = db_current_trial_info(m_db);
-		m_trialConfig.delay = currentTrialInfo.delay;
-		m_trialConfig.shouldRecord = true;
-		for (auto i = 0; i < 4; i++)
+		m_trial = db_current_trial(m_db);
+		m_sideLabels[0]->setText("Rating: 0");
+		initCurrentSubTrial();
+	}
+
+	void initCurrentSubTrial() override
+	{
+		if (m_useReference)
 		{
-			m_trialConfig.subTrialConfigs[i].controlAlgorithm = currentTrialInfo.controlAlgos[i];
-			m_trialConfig.subTrialConfigs[i].packetRate = currentTrialInfo.packetRate;
+			m_config->controlAlgorithm(ControlAlgorithm::None);
+			m_config->isReference(true);
+			m_master->packetRate(1000.0);
+			m_slave->packetRate(1000.0);
+			m_springs[0]->markReference();
 		}
-		for (auto& ratingLabel: m_sideLabels)
-			ratingLabel->setText("Rating: 0");
-		for (auto& rating: m_ratings)
-			rating = 0;
+		else
+		{
+			const auto controlAlgo = m_trial.controlAlgo;
+			m_config->isReference(false);
+			m_config->controlAlgorithm(controlAlgo);
+			m_master->packetRate(m_trial.packetRate);
+			m_slave->packetRate(m_trial.packetRate);
+			m_springs[0]->unmarkReference();
+		}
+		m_slave->spring(m_springs[0]);
 	}
 
 	void showConfig() override
 	{
-		m_packetRateLabel->setText(std::to_string(int64_t(m_trialConfig.subTrialConfigs[0].packetRate)) + " Hz");
-		m_delayLabel->setText(std::to_string(int64_t(m_trialConfig.delay)) + " ms");
-		for (auto i = 0; i < m_algorithmLabels.size(); i++)
+		m_packetRateLabel->setText(std::to_string(int64_t(m_trial.packetRate)) + " Hz");
+		m_delayLabel->setText(std::to_string(int64_t(m_trial.delay)) + " ms");
+		switch (m_trial.controlAlgo)
 		{
-			switch (m_trialConfig.subTrialConfigs[i].controlAlgorithm)
-			{
 			case ControlAlgorithm::None:
-				m_algorithmLabels[i]->setText("REF");
+				m_algorithmLabels[0]->setText("REF");
 				break;
 			case ControlAlgorithm::WAVE:
-				m_algorithmLabels[i]->setText("WAVE");
+				m_algorithmLabels[0]->setText("WAVE");
 				break;
 			case ControlAlgorithm::ISS:
-				m_algorithmLabels[i]->setText("ISS");
+				m_algorithmLabels[0]->setText("ISS");
 				break;
 			case ControlAlgorithm::PC:
-				m_algorithmLabels[i]->setText("TDPA");
+				m_algorithmLabels[0]->setText("TDPA");
 				break;
-			}
 		}
 	}
 
@@ -75,28 +85,24 @@ public:
 
 	void rightKey() override
 	{
-		const auto subTrialIdx = m_config->subTrialIdx();
-		auto const rating = min(5, m_ratings[subTrialIdx] + 1);
-		m_ratings[subTrialIdx] = rating;
-		m_sideLabels[subTrialIdx]->setText("Rating: " + std::to_string(rating));
+		auto const rating = min(5, m_trial.rating + 1);
+		m_trial.rating = rating;
+		m_sideLabels[0]->setText("Rating: " + std::to_string(rating));
 	}
 
 	void leftKey() override
 	{
-		const auto subTrialIdx = m_config->subTrialIdx();
-		auto const rating = max(1, m_ratings[subTrialIdx] - 1);
-		m_ratings[subTrialIdx] = rating;
-		m_sideLabels[subTrialIdx]->setText("Rating: " + std::to_string(rating));
+		auto const rating = max(1, m_trial.rating - 1);
+		m_trial.rating = rating;
+		m_sideLabels[0]->setText("Rating: " + std::to_string(rating));
 	}
 
 	bool saveToDb() override
 	{
-		for (auto& rating: m_ratings)
-		{
-			if (rating == 0)
-				return false;
-		}
-		db_rate_trial(m_db, m_ratings.data(), m_ratings.size());
+		if (m_trial.rating == 0)
+			return false;
+
+		db_rate_trial(m_db, m_trial.rating);
 
 		// move to the next trial if there is one left
 		const auto trialLeft = db_next_trial(m_db);
@@ -104,7 +110,6 @@ public:
 			return true;
 		clearConfig();
 		initCurrentTrial();
-		initCurrentSubTrial();
 		std::cout << m_showingConfig << std::endl;
 		if (m_showingConfig)
 			showConfig();
@@ -113,8 +118,7 @@ public:
 
 	void rate(int32_t rating) override
 	{
-		const auto subTrialIdx = m_config->subTrialIdx();
-		m_ratings[subTrialIdx] = rating;
-		m_sideLabels[subTrialIdx]->setText("Rating: " + std::to_string(rating));
+		m_trial.rating = rating;
+		m_sideLabels[0]->setText("Rating: " + std::to_string(rating));
 	}
 };

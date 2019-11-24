@@ -244,7 +244,7 @@ void initWorld()
 
 	camera->setMirrorVertical(mirroredDisplay);
 
-	cBackground* background = new cBackground();
+	const auto background = new cBackground();
 	camera->m_backLayer->addChild(background);
 
 	light = new cPositionalLight(world);
@@ -293,6 +293,27 @@ void initWorld()
 
 	toolTip = new ToolTip();
 	world->addChild(toolTip->animation());
+}
+
+void showSingleSpring()
+{
+	cVector3d springPos(0, -0.05, 0);
+	const cVector3d ratingLabelPos(1100, 500, 0);
+	const cVector3d algorithmLabelPos(900, 500, 0);
+
+	springs[0]->initialPos(springPos);
+	ratingLabels[0]->setLocalPos(ratingLabelPos);
+	algorithmLabels[0]->setLocalPos(algorithmLabelPos);
+
+	ratingLabels[0]->setText("");
+	algorithmLabels[0]->setText("");
+
+	for (auto i = 1; i < 4; i++)
+	{
+		springs[i]->m_animation->setShowEnabled(false, true);
+		ratingLabels[i]->setText("");
+		algorithmLabels[i]->setText("");
+	}
 }
 
 string readNickname()
@@ -377,7 +398,7 @@ int main(int argc, char* argv[])
 	const auto age = readAge();
 	const auto gender = readGender();
 	const auto handedness = readHandedness();
-	db_new_session(db, nickname.c_str(), age, gender, handedness, packetRates.data(), packetRates.size(), 1);
+	db_new_session(db, nickname.c_str(), age, gender, handedness, packetRates.data(), packetRates.size());
 
 	initOpenGL();
 
@@ -448,11 +469,11 @@ void keyCallback(GLFWwindow* window, int key, int scancode, int action, int mods
 	{
 	case 83: // s
 	case KEY_DOWN:
-		controller->nextSubTrial();
+		controller->downKey();
 		break;
 	case 87: //  w
 	case KEY_UP:
-		controller->previousSubTrial();
+		controller->upKey();
 		break;
 		break;
 	case 65: //  a
@@ -472,6 +493,8 @@ void keyCallback(GLFWwindow* window, int key, int scancode, int action, int mods
 			if (controllerIt == controllers.end())
 				exit(0);
 			controller = *controllerIt;
+			// TODO make nicer
+			showSingleSpring();
 			controller->init();
 		}
 		break;

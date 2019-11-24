@@ -21,10 +21,11 @@ void Master::spin()
 		break;
 	}
 
-	if (SAVE_MSG_STREAM_TO_DB && m_config->shouldRecord())
+	if constexpr (SAVE_MSG_STREAM_TO_DB)
 	{
-		auto dbMsg = hapticMessageM2StoDbMsg(msgM2S);
-		db_insert_haptic_message_m2s(m_db, Device::Master, m_config->subTrialIdx(), dbMsg);
+		const auto dbMsg = hapticMessageM2StoDbMsg(msgM2S);
+		const auto isReference = m_config->isReference();
+		db_insert_haptic_message_m2s(m_db, Device::Master, isReference, dbMsg);
 	}
 
 	if (!m_packetRateLimiter.limited())
@@ -37,10 +38,11 @@ void Master::spin()
 	cVector3d force;
 	if (receivedNewMessage)
 	{
-		if (SAVE_MSG_STREAM_TO_DB && m_config->shouldRecord())
+		if constexpr (SAVE_MSG_STREAM_TO_DB)
 		{
-			auto dbMsg = hapticMessageS2MtoDbMsg(msgS2M);
-			db_insert_haptic_message_s2m(m_db, Device::Master, m_config->subTrialIdx(), dbMsg);
+			const auto dbMsg = hapticMessageS2MtoDbMsg(msgS2M);
+			const auto isReference = m_config->isReference();
+			db_insert_haptic_message_s2m(m_db, Device::Master, isReference, dbMsg);
 		}
 
 		switch (controlAlgorithm)

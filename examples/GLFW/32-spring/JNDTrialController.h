@@ -19,13 +19,36 @@ class JNDTrialController: public Controller
 private:
 	void initCurrentTrial()
 	{
-		m_trialConfig.shouldRecord = false;
+		m_trialConfig.shouldRecord = true;
 		for (auto i = 0; i < 4; i++)
 		{
 			const auto packetRate = m_trialConfig.subTrialConfigs[i].packetRate;
 			m_sideLabels[i]->setText("Packet rate: " + std::to_string(int64_t(packetRate)));
 		}
-			
+	}
+
+	void initCurrentSubTrial() override
+	{
+		
+		const auto subTrialIdx = m_config->subTrialIdx();
+		if (m_useReference)
+		{
+			m_config->controlAlgorithm(ControlAlgorithm::None);
+			m_config->isReference(true);
+			m_master->packetRate(1000.0);
+			m_slave->packetRate(1000.0);
+			m_springs[subTrialIdx]->markReference();
+		}
+		else
+		{
+			const auto controlAlgo = m_trialConfig.subTrialConfigs[subTrialIdx].controlAlgorithm;
+			m_config->isReference(false);
+			m_config->controlAlgorithm(controlAlgo);
+			m_master->packetRate(m_trialConfig.subTrialConfigs[subTrialIdx].packetRate);
+			m_slave->packetRate(m_trialConfig.subTrialConfigs[subTrialIdx].packetRate);
+			m_springs[subTrialIdx]->unmarkReference();
+		}
+		m_slave->spring(m_springs[subTrialIdx]);
 	}
 
 	void clearConfig()
@@ -115,4 +138,26 @@ public:
 		);
 		initCurrentSubTrial();
 	}
+
+	void downKey() override
+	{
+		const auto subTrialIdx = m_config->subTrialIdx();
+		if (subTrialIdx == m_springs.size() - 1)
+			m_config->subTrialIdx(0);
+		else
+
+			m_config->subTrialIdx(subTrialIdx + 1);
+		initCurrentSubTrial();
+	}
+
+	void upKey() override
+	{
+		const auto subTrialIdx = m_config->subTrialIdx();
+		if (subTrialIdx == 0)
+			m_config->subTrialIdx(m_springs.size() - 1);
+		else
+			m_config->subTrialIdx(subTrialIdx - 1);
+		initCurrentSubTrial();
+	}
+
 };

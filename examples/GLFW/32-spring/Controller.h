@@ -35,7 +35,7 @@ protected:
 
 	cLabel* m_packetRateLabel;
 	cLabel* m_delayLabel;
-
+	
 	bool m_showingConfig = false;
 	bool m_useReference = false;
 
@@ -50,29 +50,6 @@ protected:
 	}
 
 	virtual void showConfig() {}
-
-	void initCurrentSubTrial()
-	{
-		const auto subTrialIdx = m_config->subTrialIdx();
-		if (m_useReference)
-		{
-			m_config->controlAlgorithm(ControlAlgorithm::None);
-			m_config->shouldRecord(false);
-			m_master->packetRate(1000.0);
-			m_slave->packetRate(1000.0);
-			m_springs[subTrialIdx]->markReference();
-		}
-		else
-		{
-			const auto controlAlgo = m_trialConfig.subTrialConfigs[subTrialIdx].controlAlgorithm;
-			m_config->shouldRecord(m_trialConfig.shouldRecord);
-			m_config->controlAlgorithm(controlAlgo);
-			m_master->packetRate(m_trialConfig.subTrialConfigs[subTrialIdx].packetRate);
-			m_slave->packetRate(m_trialConfig.subTrialConfigs[subTrialIdx].packetRate);
-			m_springs[subTrialIdx]->unmarkReference();
-		}
-		m_slave->spring(m_springs[subTrialIdx]);
-	}
 
 public:
 	Controller(Slave* slave, Master* master, Config* config, Network* network, DB* db,
@@ -126,32 +103,17 @@ public:
 		}
 	}
 
-	void nextSubTrial()
-	{
-		const auto subTrialIdx = m_config->subTrialIdx();
-		if (subTrialIdx == m_springs.size() - 1)
-			m_config->subTrialIdx(0);
-		else
-
-			m_config->subTrialIdx(subTrialIdx + 1);
-		initCurrentSubTrial();
-	}
-
-	void previousSubTrial()
-	{
-		const auto subTrialIdx = m_config->subTrialIdx();
-		if (subTrialIdx == 0)
-			m_config->subTrialIdx(m_springs.size() - 1);
-		else
-			m_config->subTrialIdx(subTrialIdx - 1);
-		initCurrentSubTrial();
-	}
+	virtual void initCurrentSubTrial() {}
 
 	virtual bool saveToDb() { return true; }
 
 	virtual void rightKey() {}
 
 	virtual void leftKey() {}
+
+	virtual void upKey() {}
+
+	virtual void downKey() {}
 
 	virtual void init() {}
 
