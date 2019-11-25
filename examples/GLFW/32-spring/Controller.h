@@ -89,7 +89,7 @@ public:
 		}
 	}
 
-	void toggleReference()
+	virtual void toggleReference()
 	{
 		if (m_useReference)
 		{

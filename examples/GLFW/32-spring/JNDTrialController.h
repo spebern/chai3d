@@ -31,23 +31,12 @@ private:
 	{
 		
 		const auto subTrialIdx = m_config->subTrialIdx();
-		if (m_useReference)
-		{
-			m_config->controlAlgorithm(ControlAlgorithm::None);
-			m_config->isReference(true);
-			m_master->packetRate(1000.0);
-			m_slave->packetRate(1000.0);
-			m_springs[subTrialIdx]->markReference();
-		}
-		else
-		{
-			const auto controlAlgo = m_trialConfig.subTrialConfigs[subTrialIdx].controlAlgorithm;
-			m_config->isReference(false);
-			m_config->controlAlgorithm(controlAlgo);
-			m_master->packetRate(m_trialConfig.subTrialConfigs[subTrialIdx].packetRate);
-			m_slave->packetRate(m_trialConfig.subTrialConfigs[subTrialIdx].packetRate);
-			m_springs[subTrialIdx]->unmarkReference();
-		}
+		const auto controlAlgo = m_trialConfig.subTrialConfigs[subTrialIdx].controlAlgorithm;
+		m_config->isReference(false);
+		m_config->controlAlgorithm(controlAlgo);
+		m_master->packetRate(m_trialConfig.subTrialConfigs[subTrialIdx].packetRate);
+		m_slave->packetRate(m_trialConfig.subTrialConfigs[subTrialIdx].packetRate);
+		m_springs[subTrialIdx]->unmarkReference();
 		m_slave->spring(m_springs[subTrialIdx]);
 	}
 
@@ -163,4 +152,5 @@ public:
 		initCurrentSubTrial();
 	}
 
+	void toggleReference() override {}
 };
