@@ -28,6 +28,7 @@ class Config
 private:
 	ControlAlgorithm m_controlAlgorithm;
 	uint32_t m_subTrialIdx = 0;
+	bool m_forceFeedback = false;
 	bool m_isReference = false;
 public:
 	Config(): m_controlAlgorithm(ControlAlgorithm::None) {}
@@ -60,5 +61,15 @@ public:
 	bool isReference() const
 	{
 		return m_isReference;
+	}
+
+	void forceFeedback(const bool yes)
+	{
+		m_forceFeedback = yes;
+	}
+
+	bool forceFeedback() const
+	{
+		return m_forceFeedback;
 	}
 };

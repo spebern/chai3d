@@ -520,6 +520,12 @@ void keyCallback(GLFWwindow* window, int key, int scancode, int action, int mods
 	case '5':
 		controller->rate(5);
 		break;
+	case 32: // space
+	{
+		const auto forceFeedback = config->forceFeedback();
+		config->forceFeedback(!forceFeedback);
+		break;
+	}
 	default: ;
 		std::cout << "unused key " << key << std::endl;
 	}
