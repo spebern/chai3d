@@ -83,7 +83,7 @@ public:
 		controlAlgorithms[3] = ControlAlgorithm::WAVE;
 
 		std::srand(std::time(0));
-		shuffle(controlAlgorithms.begin(), controlAlgorithms.end(), std::default_random_engine());
+		random_shuffle(controlAlgorithms.begin(), controlAlgorithms.end());
 
 		m_trialConfig.delay = 0.0;
 		for (auto i = 0; i < 4; i++)
