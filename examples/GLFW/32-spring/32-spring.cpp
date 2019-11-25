@@ -389,10 +389,12 @@ int main(int argc, char* argv[])
 	vector<int32_t> packetRates;
 	packetRates.push_back(15);
 	packetRates.push_back(30);
+	packetRates.push_back(40);
 	packetRates.push_back(50);
+	packetRates.push_back(60);
 	packetRates.push_back(70);
 	packetRates.push_back(90);
-	packetRates.push_back(130);
+	packetRates.push_back(120);
 
 	const auto nickname = readNickname();
 	const auto age = readAge();
