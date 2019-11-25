@@ -92,7 +92,10 @@ public:
 		controlAlgorithms[1] = ControlAlgorithm::ISS;
 		controlAlgorithms[2] = ControlAlgorithm::PC;
 		controlAlgorithms[3] = ControlAlgorithm::WAVE;
+
+		std::srand(std::time(0));
 		shuffle(controlAlgorithms.begin(), controlAlgorithms.end(), std::default_random_engine());
+
 		m_trialConfig.delay = 0.0;
 		for (auto i = 0; i < 4; i++)
 		{
