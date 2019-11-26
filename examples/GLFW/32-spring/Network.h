@@ -1,6 +1,7 @@
 #pragma once
 
 #include <chrono>;
+#include <random>;
 #include "chai3d.h"
 #include "Channel.h"
 #include "haptic_db_ffi.h"
@@ -48,17 +49,26 @@ class Network
 {
 private:
 	chrono::microseconds m_delay;
-	chrono::microseconds m_varDelay;
+	double m_varDelayPercentage;
 	Channel<HapticMessageM2S> m_channelM2S;
 	Channel<HapticMessageS2M> m_channelS2M;
+
+	std::default_random_engine m_generator;
+	std::normal_distribution<double> m_dist;
+
+	chrono::microseconds sampleDelay() {
+		return m_delay + chrono::microseconds(static_cast<int64_t>(m_dist(m_generator)));
+	}
+
 public:
-	Network(const chrono::microseconds delay, const chrono::microseconds varDelay)
+		Network(const chrono::microseconds delay, const double varDelayPercentage)
 		: m_delay(delay)
-		, m_varDelay(varDelay)
+		, m_varDelayPercentage(varDelayPercentage)
+		, m_dist(0.0, static_cast<double>(delay.count()) * varDelayPercentage)
 	{
 	}
 
-	Network(): m_delay(0), m_varDelay(0)
+	Network(): m_delay(0), m_varDelayPercentage(0.0), m_dist(0, 0)
 	{
 	}
 
@@ -88,19 +98,26 @@ public:
 		m_channelS2M.clear();
 	}
 
-	void increaseDelay(chrono::microseconds dDelay)
+	void increaseDelay(const chrono::microseconds dDelay)
 	{
-		m_delay = min(chrono::microseconds(200000), m_delay + dDelay);
+		const auto newDelay = min(chrono::microseconds(200000), m_delay + dDelay);
+		delay(newDelay);
 	}
 
-	void decreaseDelay(chrono::microseconds dDelay)
+	void decreaseDelay(const chrono::microseconds dDelay)
 	{
-		m_delay = max(chrono::microseconds(0), m_delay - dDelay);
+		const auto newDelay = max(chrono::microseconds(0), m_delay - dDelay);
+		delay(newDelay);
 	}
 
-	void delay(chrono::microseconds delay)
+	void delay(const chrono::microseconds delay)
 	{
 		m_delay = delay;
+		const normal_distribution<double> dist(
+			0.0, 
+			static_cast<double>(delay.count())* m_varDelayPercentage
+		);
+		m_dist = dist;
 	}
 
 	chrono::microseconds delay() const

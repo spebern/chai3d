@@ -33,6 +33,7 @@ private:
 			m_config->isReference(true);
 			m_master->packetRate(1000.0);
 			m_slave->packetRate(1000.0);
+			m_network->delay(chrono::microseconds(0));
 			m_springs[0]->markReference();
 		}
 		else
@@ -42,6 +43,9 @@ private:
 			m_config->controlAlgorithm(controlAlgo);
 			m_master->packetRate(m_trial.packetRate);
 			m_slave->packetRate(m_trial.packetRate);
+			const auto delay = chrono::duration_cast<chrono::microseconds>(chrono::milliseconds(m_trial.delay));
+			m_network->delay(delay);
+			m_springs[0]->markReference();
 			m_springs[0]->unmarkReference();
 		}
 		m_slave->spring(m_springs[0]);

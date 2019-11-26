@@ -407,9 +407,8 @@ int main(int argc, char* argv[])
 	initWorld();
 
 	const std::chrono::microseconds delay(0);
-	const std::chrono::microseconds varDelay(0);
 	config = new Config();
-	network = new Network(delay, varDelay);
+	network = new Network(delay, 0.0);
 	master = new Master(network, hapticDevice, config, db);
 	slave = new Slave(network, springs[0], config, toolTip, db, info.m_maxLinearStiffness);
 
