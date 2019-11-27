@@ -79,15 +79,16 @@ bool Channel<T>::tryReceive(T& msg)
 {
 	if (!m_mu.acquire())
 		return false;
-	if (!m_q.empty() && isFrontDue())
+
+	auto received = false;
+	while (!m_q.empty() && isFrontDue())
 	{
 		msg = m_q.front().msg;
 		m_q.pop();
-		m_mu.release();
-		return true;
+		received = true;
 	}
 	m_mu.release();
-	return false;
+	return received;
 }
 
 template <typename T>
