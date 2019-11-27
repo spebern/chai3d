@@ -69,6 +69,9 @@ private:
 			case ControlAlgorithm::PC:
 				m_algorithmLabels[0]->setText("TDPA");
 				break;
+			case ControlAlgorithm::MMT:
+				m_algorithmLabels[0]->setText("MMT");
+				break;
 		}
 	}
 

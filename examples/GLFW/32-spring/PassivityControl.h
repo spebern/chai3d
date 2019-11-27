@@ -19,7 +19,7 @@ public:
 	{
 	}
 
-	cVector3d calculateForce(cVector3d& force, cVector3d& vel)
+	cVector3d calculateForce(const cVector3d& force, const cVector3d& vel)
 	{
 		m_energy += (force.dot(vel) + m_alpha * m_prevVel.dot(m_prevVel));
 		m_prevVel = vel;

@@ -51,6 +51,14 @@ void Master::spin()
 			m_wave.vm(msgS2M.force);
 			force = m_wave.calculateForce(vel);
 			break;
+		case ControlAlgorithm::MMT:
+		{
+			const auto indention = max(0.0, pos.y() - SPRING_Y);
+			force.x(0);
+			force.y(MMTMaster::calculateForce(msgS2M.force.y(), indention));
+			force.z(0);
+			break;
+		}
 		default:
 			force = msgS2M.force;
 			break;

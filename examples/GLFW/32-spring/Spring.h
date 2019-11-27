@@ -34,9 +34,14 @@ public:
 		delete m_animation;
 	}
 
+	double calcIndention(cVector3d& pos) const
+	{
+		return max(0.0, pos.y() - m_initialPos.y());
+	}
+
 	cVector3d updatePositionAndCalculateForce(cVector3d& pos, cVector3d& vel) const
 	{
-		const auto indention = max(0.0, pos.y() - m_initialPos.y());
+		const auto indention = calcIndention(pos);
 		if (indention < 0.00)
 		{
 			m_animation->setLocalPos(m_initialPos);

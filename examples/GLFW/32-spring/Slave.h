@@ -12,6 +12,7 @@
 #include "ToolTip.h"
 #include "haptic_db_ffi.h"
 #include "Config.h"
+#include "MMT.h"
 
 using namespace chai3d;
 
@@ -46,6 +47,7 @@ private:
 	WAVESlave m_wave;
 	PassivityControl m_passivityControl;
 	ISS m_iss;
+	MMTSlave m_mmt;
 
 	DB* m_db;
 public:

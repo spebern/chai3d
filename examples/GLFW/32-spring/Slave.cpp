@@ -7,7 +7,8 @@ void Slave::spin()
 	auto const controlAlgorithm = m_config->controlAlgorithm();
 	auto const receivedNewMsg = m_network->tryReceiveM2S(msgM2S);
 
-	auto springForce = m_spring->updatePositionAndCalculateForce(m_pos, m_vel);
+	const auto indention = m_spring->calcIndention(m_pos);
+	const auto springForce = m_spring->updatePositionAndCalculateForce(m_pos, m_vel);
 
 	cVector3d vel, pos;
 	if (receivedNewMsg)
@@ -67,6 +68,12 @@ void Slave::spin()
 	case ControlAlgorithm::ISS:
 		msgS2M.force = m_iss.calculateForce(springForce, m_force);
 		m_force = springForce;
+		break;
+	case ControlAlgorithm::MMT:
+		m_mmt.updateK(springForce.y(), indention);
+		msgS2M.force.x(0);
+		msgS2M.force.y(m_mmt.k());
+		msgS2M.force.z(0);
 		break;
 	default:
 		m_force = springForce;

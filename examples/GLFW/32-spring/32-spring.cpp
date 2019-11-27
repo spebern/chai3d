@@ -251,7 +251,7 @@ void initWorld()
 	world->addChild(light);
 	light->setEnabled(true);
 
-	cVector3d springPos(0, -0.05, 0.15);
+	cVector3d springPos(0, SPRING_Y, 0.15);
 	cVector3d ratingLabelPos(1100, 870, 0);
 	cVector3d algorithmLabelPos(900, 890, 0);
 	for (auto i = 0; i < 4; i++)

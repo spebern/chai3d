@@ -5,6 +5,7 @@
 #define DT 0.001
 
 #define SPRING_K 800.0
+#define SPRING_Y -0.05
 
 #define WAVE_B 0.3
 
@@ -20,6 +21,9 @@
 
 #define SLAVE_MASS    0.04
 #define SLAVE_DAMPING 0.04
+
+#define MMT_LAMBDA 0.1
+#define MMT_INITIAL_K 200
 
 #include "haptic_db_ffi.h"
 

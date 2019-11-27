@@ -5,6 +5,7 @@
 #include "RateLimiter.h"
 #include "Config.h"
 #include "WAVE.h"
+#include "MMT.h"
 #include "ISS.h"
 #include "haptic_db_ffi.h"
 
