@@ -81,6 +81,10 @@ void Slave::spin()
 		break;
 	}
 
+	const auto transmit = DEADBAND_ACTIVE && m_deadbandDetector.inDeadband(springForce);
+	if (transmit && !m_packetRateLimiter.limited())
+		m_network->sendS2M(msgS2M);
+
 	if constexpr (SAVE_MSG_STREAM_TO_DB)
 	{
 		const auto dbMsg = hapticMessageS2MtoDbMsg(msgS2M);

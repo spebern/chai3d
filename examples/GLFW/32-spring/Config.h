@@ -25,6 +25,9 @@
 #define MMT_LAMBDA 0.1
 #define MMT_INITIAL_K 200
 
+#define DEADBAND_ACTIVE 1
+#define DEADBAND_THRESHOLD 0.1
+
 #include "haptic_db_ffi.h"
 
 class Config

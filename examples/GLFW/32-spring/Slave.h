@@ -11,8 +11,8 @@
 #include "ISS.h"
 #include "ToolTip.h"
 #include "haptic_db_ffi.h"
-#include "Config.h"
 #include "MMT.h"
+#include "Deadband.h"
 
 using namespace chai3d;
 
@@ -48,6 +48,8 @@ private:
 	PassivityControl m_passivityControl;
 	ISS m_iss;
 	MMTSlave m_mmt;
+
+	DeadbandDetector m_deadbandDetector;
 
 	DB* m_db;
 public:
