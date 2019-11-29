@@ -1,3 +1,0 @@
-[submodule "external/haptic-db"]
-	path = external/haptic-db
-	url = https://github.com/spebern/haptic-db
