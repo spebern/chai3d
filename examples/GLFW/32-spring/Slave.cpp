@@ -35,8 +35,9 @@ void Slave::spin()
 		}
 	}
 
-	// auto const pdForce = m_pdController.calculateForce(m_posRef, m_pos, m_velRef, m_vel);
-	auto const pdForce = m_pidController.calculateForce(m_posRef, m_pos, m_velRef, m_vel);
+	auto const pdForce = USE_PD
+		? m_pdController.calculateForce(m_posRef, m_pos, m_velRef, m_vel)
+		: m_pidController.calculateForce(m_posRef, m_pos, m_velRef, m_vel);;
 
 	auto const totalForce = pdForce + springForce;
 
