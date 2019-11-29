@@ -70,7 +70,7 @@ void Slave::spin()
 		m_force = springForce;
 		break;
 	case ControlAlgorithm::MMT:
-		m_mmt.updateK(springForce.y(), indention);
+		m_mmt.updateK(springForce.y(), m_pos);
 		msgS2M.force.x(0);
 		msgS2M.force.y(m_mmt.k());
 		msgS2M.force.z(0);

@@ -6,7 +6,6 @@
 #include "Config.h"
 #include "WAVE.h"
 #include "MMT.h"
-#include "ISS.h"
 #include "haptic_db_ffi.h"
 
 using namespace std;
@@ -27,6 +26,7 @@ private:
 	cVector3d m_force;
 
 	WAVEMaster m_wave;
+	MMTMaster m_mmt;
 
 	DB* m_db;
 public:

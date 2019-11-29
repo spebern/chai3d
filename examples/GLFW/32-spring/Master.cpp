@@ -53,10 +53,8 @@ void Master::spin()
 			break;
 		case ControlAlgorithm::MMT:
 		{
-			const auto indention = max(0.0, pos.y() - SPRING_Y);
-			force.x(0);
-			force.y(MMTMaster::calculateForce(msgS2M.force.y(), indention));
-			force.z(0);
+			m_mmt.k(msgS2M.force.y());
+			force = m_mmt.calculateForce(pos);
 			break;
 		}
 		default:
@@ -70,6 +68,9 @@ void Master::spin()
 	}
 	else
 	{
+		if (controlAlgorithm == ControlAlgorithm::MMT)
+			m_force = m_mmt.calculateForce(pos);
+
 		if (m_config->forceFeedback())
 			m_hapticDevice->setForce(limitForce(m_force));
 	}
