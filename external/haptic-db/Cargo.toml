@@ -1,0 +1,25 @@
+[package]
+name = "haptic-db"
+version = "0.1.0"
+authors = ["ben"]
+edition = "2018"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+postgres = { version = "0.15.2", features = ["with-chrono"] }
+crossbeam = "0.7.2"
+chrono = "0.4.9"
+libc = "0.2.62"
+postgres-derive = "0.3.3"
+rand = "0.7.2"
+
+[lib]
+name = "libhaptic_db"
+crate-type = ["staticlib"]
+
+[build-dependencies]
+cbindgen = "0.9.1"
+
+[package.metadata.docs.rs]
+no-default-features = true

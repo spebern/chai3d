@@ -1,0 +1,8 @@
+include_guard = "haptic_db_ffi_h"
+language = "C++"
+
+[fn]
+rename_args = "CamelCase"
+
+[struct]
+rename_fields = "CamelCase"
