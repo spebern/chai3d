@@ -1,3 +1,4 @@
+#include <boost/asio.hpp>
 #include "chai3d.h"
 #include <GLFW/glfw3.h>
 #include "Network.h"
@@ -13,6 +14,8 @@
 #include "TrialController.h"
 #include "JNDTrialController.h"
 #include "Controller.h"
+#include "thread"
+
 
 using namespace chai3d;
 using namespace std;
@@ -424,8 +427,8 @@ int main(int argc, char* argv[])
 	controller->init();
 
 	// create a thread which starts the main haptics rendering loop
-	hapticsThread = new cThread();
-	hapticsThread->start(updateHaptics, CTHREAD_PRIORITY_HAPTICS);
+	std::thread hapticsThread(updateHaptics);
+	hapticsThread.detach();
 
 	atexit(close);
 
@@ -591,10 +594,16 @@ void updateHaptics()
 		hapticDevice->getLinearVelocity(ignore);
 	}
 
+	boost::asio::io_service io;
 	while (simulationRunning)
 	{
+		// limit to 1000Hz
+		boost::asio::deadline_timer t(io, boost::posix_time::milliseconds(1));
+
 		slave->spin();
 		master->spin();
+
+		t.wait();
 	}
 
 	simulationFinished = true;

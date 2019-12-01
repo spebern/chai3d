@@ -89,17 +89,15 @@ include_directories (OPENGL_INCLUDE_DIR)
 
 include(${CMAKE_ROOT}/Modules/ExternalProject.cmake)
 #
-ExternalProject_Add(
-        haptic_db
-        DOWNLOAD_COMMAND ""
-        CONFIGURE_COMMAND ""
-        BUILD_COMMAND cargo build COMMAND cargo build --release
-        BINARY_DIR "${CMAKE_SOURCE_DIR}/external/haptic-db"
-        INSTALL_COMMAND ""
-        LOG_BUILD ON)
 
-# Hapitc DB
-find_library(HAPTIC_DB_LIBRARY haptic_db.lib ${PROJECT_SOURCE_DIR}/external/haptic-db/target/release)
+# Haptic DB
+find_library(HAPTIC_DB_LIBRARY libhaptic_db.lib ${PROJECT_SOURCE_DIR}/external/haptic-db/target/release)
+
+set (BOOST_ROOT ../boost_1_71_0)
+#set (BOOST_LIBRARYDIR ../boost_1_71_0/stage/lib)
+set (Boost_USE_STATIC_LIBS ON)
+find_package(Boost 1.7 REQUIRED COMPONENTS date_time system regex)
+include_directories( ${Boost_INCLUDE_DIR} )
 
 # on non-Windows, DHD dependency
 if (NOT ${CMAKE_SYSTEM_NAME} MATCHES Windows)

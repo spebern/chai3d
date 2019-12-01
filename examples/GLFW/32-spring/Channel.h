@@ -2,6 +2,7 @@
 
 #include <queue>
 #include <chrono>
+#include <mutex>
 #include "chai3d.h"
 
 using namespace std;
@@ -23,8 +24,8 @@ class Channel
 {
 private:
 	std::queue<Packet<T>> m_q;
-	bool isFrontDue();
-	cMutex m_mu;
+	bool isFrontDue(chrono::high_resolution_clock::time_point now);
+	std::mutex m_mu;
 public:
 	/**
 	 * \brief send a message through the channel
@@ -57,16 +58,13 @@ void Channel<T>::send(T& msg, const chrono::microseconds delay)
 	packet.msg = msg;
 	packet.arrivalTime = arrivalTime;
 
-	if (!m_mu.acquire())
-		return;
+	std::unique_lock<std::mutex> lock(m_mu);
 	m_q.push(packet);
-	m_mu.release();
 }
 
 template <typename T>
-bool Channel<T>::isFrontDue()
+bool Channel<T>::isFrontDue(chrono::high_resolution_clock::time_point now)
 {
-	const auto now = chrono::high_resolution_clock::now();
 	if (m_q.front().arrivalTime <= now)
 	{
 		return true;
@@ -77,26 +75,23 @@ bool Channel<T>::isFrontDue()
 template <typename T>
 bool Channel<T>::tryReceive(T& msg)
 {
-	if (!m_mu.acquire())
-		return false;
+	std::unique_lock<std::mutex> lock(m_mu);
 
+	const auto now = chrono::high_resolution_clock::now();
 	auto received = false;
-	while (!m_q.empty() && isFrontDue())
+	while (!m_q.empty() && isFrontDue(now))
 	{
 		msg = m_q.front().msg;
 		m_q.pop();
 		received = true;
 	}
-	m_mu.release();
 	return received;
 }
 
 template <typename T>
 void Channel<T>::clear()
 {
-	if (!m_mu.acquire())
-		return;
+	std::unique_lock<std::mutex> lock(m_mu);
 	while (!m_q.empty())
 		m_q.pop();
-	m_mu.release();
 }
