@@ -13,6 +13,7 @@
 
 using namespace chai3d;
 
+/*
 class TrialController: public Controller
 {
 private:
@@ -27,6 +28,7 @@ private:
 
 	void initCurrentSubTrial() override
 	{
+		m_config->lock();
 		if (m_useReference)
 		{
 			m_config->controlAlgorithm(ControlAlgorithm::None);
@@ -48,6 +50,7 @@ private:
 			m_springs[0]->markReference();
 			m_springs[0]->unmarkReference();
 		}
+		m_config->unlock();
 		m_slave->spring(m_springs[0]);
 	}
 
@@ -77,7 +80,7 @@ private:
 
 public:
 	TrialController(Slave* slave, Master* master, Config* config, Network* network, DB* db,
-		const array<cLabel*, 4>& sideLabels, const array<Spring*, 4>& springs, const array<cLabel*, 4>& algorithmLabels,
+		const array<cLabel*, 5>& sideLabels, const array<Spring*, 5>& springs, const array<cLabel*, 5>& algorithmLabels,
 		cLabel* packetRateLabel, cLabel* delayLabel)
 		: Controller(slave, master, config, network, db, sideLabels, springs, algorithmLabels, packetRateLabel, delayLabel)
 	{
@@ -129,3 +132,4 @@ public:
 		m_sideLabels[0]->setText("Rating: " + std::to_string(rating));
 	}
 };
+*/

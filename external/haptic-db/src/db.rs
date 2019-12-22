@@ -1,9 +1,8 @@
-use chrono::prelude::*;
 use crossbeam::{unbounded, Receiver, Sender};
 use postgres::params::{ConnectParams, Host};
 use postgres::{Connection, TlsMode};
-use rand::prelude::*;
 use std::thread;
+use time::{self, PreciseTime, Timespec};
 
 #[repr(u8)]
 #[derive(Debug, ToSql, FromSql, Clone)]
@@ -20,6 +19,13 @@ pub enum ControlAlgorithm {
     ISS,
     PC,
     MMT,
+}
+
+#[repr(u8)]
+#[derive(Debug, ToSql, FromSql, Clone)]
+pub enum OptimisationParameter {
+    PacketRate,
+    Delay,
 }
 
 impl Default for ControlAlgorithm {
@@ -47,7 +53,6 @@ pub enum Handedness {
 pub struct Session {
     id: i32,
     subject: Subject,
-    trials: Vec<Trial>,
 }
 
 #[derive(Debug)]
@@ -65,60 +70,61 @@ pub struct State {
     pos: [f64; 3],
     force: [f64; 3],
     device: Device,
+    master_update: bool,
+    slave_update: bool,
 }
 
-#[repr(C)]
-#[derive(Debug, Clone)]
-pub struct Trial {
-    id: i32,
-    packet_rate: i32,
-    delay: i32,
-    session_id: i32,
-    control_algo: ControlAlgorithm,
-    rating: i32,
-}
-
-#[repr(C)]
-#[derive(Debug, Clone)]
-pub struct TrialInfo {
-    packet_rate: i32,
-    delay: i32,
-    control_algos: [ControlAlgorithm; 4],
-}
-
-fn handle_haptic_states(rx: Receiver<(i32, bool, DateTime<Utc>, State)>, conn: Connection) {
+fn handle_haptic_states(rx: Receiver<(bool, Timespec, State)>, conn: Connection) {
     thread::spawn(move || {
         let stmt = conn
             .prepare(
                 r#"
             INSERT INTO haptic.state
-            (device, pos, vel, force, is_reference, trial_id)
-            VALUES ($1, $2, $3, $4, $5, $6)
+            (device, pos, vel, force, is_reference, time, master_update, slave_update)
+            VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
         "#,
             )
             .unwrap();
-        for (trial_id, is_reference, now, state) in rx {
-            let now = now.with_timezone(&Local);
+        for (is_reference, now, state) in rx {
             stmt.execute(&[
                 &state.device,
                 &&state.pos[..],
                 &&state.vel[..],
                 &&state.force[..],
                 &is_reference,
-                //&now,
-                &trial_id,
-            ])
-            .expect("failed to insert haptic state");
+                &now,
+                &state.master_update,
+                &state.slave_update,
+            ]).expect("failed to insert haptic state");
         }
     });
 }
 
+fn handle_target_positions(rx: Receiver<(Timespec, [f64; 3])>, conn: Connection) {
+    thread::spawn(move || {
+        let stmt = conn
+            .prepare(
+                r#"
+            INSERT INTO haptic.target_position
+            (time, pos)
+            VALUES ($1, $2)
+        "#,
+            )
+            .unwrap();
+        for (now,  pos) in rx {
+            stmt.execute(&[&now, &&pos[..]]).expect("failed to insert haptic position");
+        }
+    });
+}
+
+#[repr(C)]
 pub struct DB {
-    tx_haptic_slave_states: Sender<(i32, bool, DateTime<Utc>, State)>,
-    tx_haptic_master_states: Sender<(i32, bool, DateTime<Utc>, State)>,
+    tx_haptic_states: Sender<(bool, Timespec, State)>,
+    tx_target_positions: Sender<(Timespec, [f64; 3])>,
     conn: Connection,
     session: Session,
-    current_trial_idx: usize,
+    start: Timespec,
+    precise_start: PreciseTime,
 }
 
 impl DB {
@@ -169,9 +175,6 @@ impl DB {
         age: i32,
         gender: Gender,
         handedness: Handedness,
-        packet_rates: Vec<i32>,
-        delays: Vec<i32>,
-        control_algos: Vec<ControlAlgorithm>,
     ) {
         let subject = self.new_subject(nickname, age, gender, handedness);
         let stmt = self
@@ -181,110 +184,27 @@ impl DB {
         let rows = stmt
             .query(&[&subject.id])
             .expect("failed to create session");
-        let session_id = rows.get(0).get(0);
-
-        let mut combinations =
-            Vec::with_capacity(control_algos.len() * packet_rates.len() * delays.len());
-        for control_algo in &control_algos {
-            for packet_rate in &packet_rates {
-                for delay in &delays {
-                    combinations.push((control_algo.clone(), *packet_rate, *delay));
-                }
-            }
-        }
-        combinations.shuffle(&mut thread_rng());
-
-        let trials = combinations
-            .into_iter()
-            .map(|(control_algo, packet_rate, delay)| {
-                self.new_trial(session_id, packet_rate, delay, control_algo)
-            })
-            .collect();
-
+        let id = rows.get(0).get(0);
         self.session = Session {
-            id: session_id,
+            id,
             subject,
-            trials,
         };
     }
 
-    fn new_trial(
-        &self,
-        session_id: i32,
-        packet_rate: i32,
-        delay: i32,
-        control_algo: ControlAlgorithm,
-    ) -> Trial {
-        let stmt = self
-            .conn
-            .prepare("INSERT INTO haptic.trial (session_id, packet_rate, delay, control_algo) VALUES ($1, $2, $3, $4) RETURNING id")
-            .expect("failed to create session");
-        let rows = stmt
-            .query(&[&session_id, &packet_rate, &delay, &control_algo])
-            .expect("failed to create trial");
-        let trial_id = rows.get(0).get(0);
-        Trial {
-            id: trial_id,
-            packet_rate,
-            delay,
-            session_id,
-            control_algo,
-            rating: 0,
+    pub fn new(db_name: Option<&str>, num_state_writer_threads: u8) -> Self {
+        let (tx_haptic_states, rx_haptic_states) = unbounded();
+        for _ in 0..num_state_writer_threads {
+            handle_haptic_states(rx_haptic_states.clone(), DB::connect(db_name));
         }
-    }
-
-    pub fn current_trial(&self) -> Trial {
-        self.session.trials[self.current_trial_idx].clone()
-    }
-
-    pub fn next_trial(&mut self) -> bool {
-        if self.session.trials.len() - 1 == self.current_trial_idx {
-            false
-        } else {
-            self.current_trial_idx += 1;
-            true
-        }
-    }
-
-    pub fn rate_trial(&self, rating: i32) {
-        let trial = self.current_trial();
-        let stmt = self
-            .conn
-            .prepare("UPDATE haptic.trial SET rating = $1 WHERE id = $2")
-            .expect("failed to create session");
-        stmt.execute(&[&rating, &trial.id])
-            .expect("failed to update rating of trial");
-    }
-
-    pub fn save_jnd(&self, control_algo: ControlAlgorithm, packet_rate: i32) {
-        let stmt = self
-            .conn
-            .prepare(
-                r#"
-                    INSERT INTO haptic.jnd 
-                        (subject_id, control_algo, packet_rate) VALUES 
-                        ($1, $2, $3) 
-                    ON CONFLICT (subject_id, control_algo) 
-                    DO UPDATE SET 
-                        packet_rate = EXCLUDED.packet_rate"#,
-            )
-            .expect("failed to create jnd");
-        stmt.execute(&[&self.session.subject.id, &control_algo, &packet_rate])
-            .expect("failed to create session");
-    }
-
-    pub fn new(db_name: Option<&str>) -> Self {
-        let (tx_haptic_master_states, rx_haptic_master_states) = unbounded();
-        handle_haptic_states(rx_haptic_master_states, DB::connect(db_name));
-
-        let (tx_haptic_slave_states, rx_haptic_slave_states) = unbounded();
-        handle_haptic_states(rx_haptic_slave_states, DB::connect(db_name));
+        let (tx_target_positions, rx_target_positions) = unbounded();
+        handle_target_positions(rx_target_positions.clone(), DB::connect(db_name));
 
         Self {
-            tx_haptic_slave_states,
-            tx_haptic_master_states,
+            tx_haptic_states,
+            tx_target_positions,
             conn: Self::connect(db_name),
-            // sample session
+            start: time::now_utc().to_timespec(),
+            precise_start: time::PreciseTime::now(),
             session: Session {
                 id: 0,
                 subject: Subject {
@@ -293,36 +213,38 @@ impl DB {
                     gender: Gender::Male,
                     handedness: Handedness::Right,
                 },
-                trials: vec![Trial {
-                    id: 0,
-                    packet_rate: 1000,
-                    delay: 0,
-                    session_id: 0,
-                    control_algo: Default::default(),
-                    rating: 0,
-                }],
             },
-            // sample subject
-            current_trial_idx: 0,
         }
     }
 
-    pub fn insert_haptic_state(&self, now: u64, is_reference: bool, state: State) {
-        let now =
-            DateTime::<Utc>::from(std::time::UNIX_EPOCH + std::time::Duration::from_micros(now));
-        let trial_id = self.current_trial().id;
-        match state.device {
-            Device::Master => {
-                self.tx_haptic_master_states
-                    .send((trial_id, is_reference, now, state))
-                    .expect("failed to queue haptic master state");
-            }
-            Device::Slave => {
-                self.tx_haptic_slave_states
-                    .send((trial_id, is_reference, now, state))
-                    .expect("failed to queue haptic slave state");
-            }
-        }
+    fn timestamp(&self) -> time::Timespec {
+        let passed = self.precise_start.to(time::PreciseTime::now());
+        self.start + passed
+    }
+
+    pub fn insert_haptic_state(&self, is_reference: bool, state: State) {
+        let now = self.timestamp();
+        self.tx_haptic_states
+            .send((is_reference, now, state))
+            .expect("failed to queue haptic master state");
+    }
+
+    pub fn insert_rating(&mut self, control_algorithm: ControlAlgorithm, packet_rate: i32, delay: i32, optimisation_parameter: OptimisationParameter, rating: i32) {
+        let stmt = self
+            .conn
+            .prepare(
+                r#"
+                    INSERT INTO haptic.rating
+                        (session_id, control_algorithm, packet_rate, delay, optimisation_parameter, rating) VALUES
+                        ($1, $2, $3, $4, $5, $6)
+                    RETURNING id"#,
+            )
+            .expect("failed to create insert rating stmt");
+
+        let session_id = self.session.id;
+        stmt
+            .execute(&[&session_id, &control_algorithm, &packet_rate, &delay, &optimisation_parameter, &rating])
+            .expect("failed to insert rating");
     }
 
     #[cfg(test)]
@@ -340,16 +262,13 @@ mod tests {
     #[test]
     fn basic() {
         let db_name = "test_haptic2";
-        let mut db = DB::new(Some(db_name));
+        let mut db = DB::new(Some(db_name), 1);
 
         db.new_session(
             "ben",
             25,
             Gender::Male,
             Handedness::Right,
-            vec![10, 50, 100],
-            vec![10, 20],
-            vec![ControlAlgorithm::MMT, ControlAlgorithm::ISS],
         );
 
         db.new_subject("ben", 12, Gender::Male, Handedness::Right);
@@ -359,15 +278,16 @@ mod tests {
             pos: [0.4, 0.5, 0.6],
             force: [0.7, 0.8, 0.9],
             device: Device::Master,
+            master_update: true,
+            slave_update: true,
         };
-        db.insert_haptic_state(1, true, state.clone());
-        db.insert_haptic_state(2, true, state.clone());
-        db.insert_haptic_state(3, true, state.clone());
-        db.insert_haptic_state(4, true, state.clone());
+        db.insert_haptic_state(true, state.clone());
+        db.insert_haptic_state(true, state.clone());
+        db.insert_haptic_state(true, state.clone());
+        db.insert_haptic_state(true, state.clone());
 
-        db.save_jnd(ControlAlgorithm::ISS, 120);
-        db.save_jnd(ControlAlgorithm::ISS, 110);
-        db.save_jnd(ControlAlgorithm::None, 110);
+        db.insert_rating(ControlAlgorithm::ISS, 10, 10, OptimisationParameter::Delay, 5);
+        db.insert_rating(ControlAlgorithm::None, 10, 10, OptimisationParameter::PacketRate, 5);
 
         std::thread::sleep(std::time::Duration::from_secs(2));
 

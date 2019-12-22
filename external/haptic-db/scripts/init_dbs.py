@@ -14,6 +14,11 @@ CREATE TYPE "Device" AS ENUM (
     'Slave'
 );
 
+CREATE TYPE "OptimisationParameter" AS ENUM (
+    'PacketRate',
+    'Delay'
+);
+
 CREATE TYPE "ControlAlgorithm" AS ENUM (
     'None',
     'WAVE',
@@ -47,60 +52,34 @@ CREATE TABLE haptic.session (
     subject_id  INTEGER REFERENCES haptic.subject(id) ON DELETE CASCADE
 );
 
-CREATE TABLE haptic.jnd (
-    id          SERIAL               PRIMARY KEY,
-    control_algo "ControlAlgorithm"  NOT NULL,
-    packet_rate INTEGER              NOT NULL,
-    subject_id  INTEGER REFERENCES haptic.subject(id) ON DELETE CASCADE,
-    unique (subject_id, control_algo)
+CREATE TABLE haptic.rating (
+    id                     SERIAL PRIMARY KEY,
+    delay                  INTEGER NOT NULL,
+    packet_rate            INTEGER NOT NULL,
+    rating                 INTEGER NOT NULL,
+    control_algorithm      "ControlAlgorithm" NOT NULL,
+    optimisation_parameter "OptimisationParameter"  NOT NULL,
+    created                TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    session_id             INTEGER REFERENCES haptic.session(id) ON DELETE CASCADE
 );
-
-CREATE TABLE haptic.trial (
-    id           SERIAL PRIMARY KEY,
-    packet_rate  INTEGER NOT NULL,
-    delay        INTEGER NOT NULL,
-    rating       INTEGER,
-    control_algo "ControlAlgorithm"  NOT NULL,
-    session_id   INTEGER REFERENCES haptic.session(id) ON DELETE CASCADE
-);
-
-CREATE TABLE haptic.msg_m2s (
-    sequence_number INTEGER NOT NULL,
-    time            TIMESTAMPTZ         NOT NULL DEFAULT NOW(),
-    device          "Device"            NOT NULL,
-    vel             DOUBLE PRECISION[3] NOT NULL,
-    pos             DOUBLE PRECISION[3] NOT NULL,
-    is_reference    BOOLEAN             NOT NULL,
-    trial_id        INTEGER REFERENCES  haptic.trial(id) ON DELETE CASCADE
-);
-
-SELECT create_hypertable('haptic.msg_m2s', 'time');
-CREATE INDEX ON haptic.msg_m2s (device, trial_id, time DESC);
-
-CREATE TABLE haptic.msg_s2m (
-    sequence_number INTEGER NOT NULL,
-    time            TIMESTAMPTZ         NOT NULL DEFAULT NOW(),
-    device         "Device"             NOT NULL,
-    force           DOUBLE PRECISION[3] NOT NULL,
-    is_reference    BOOLEAN             NOT NULL,
-    trial_id        INTEGER REFERENCES  haptic.trial(id) ON DELETE CASCADE
-);
-
-SELECT create_hypertable('haptic.msg_s2m', 'time');
-CREATE INDEX ON haptic.msg_s2m (device, trial_id, time DESC);
 
 CREATE TABLE haptic.state (
-    time            TIMESTAMPTZ         NOT NULL DEFAULT NOW(),
-    device         "Device"             NOT NULL,
+    time            TIMESTAMPTZ         NOT NULL,
     pos             DOUBLE PRECISION[3] NOT NULL,
     vel             DOUBLE PRECISION[3] NOT NULL,
     force           DOUBLE PRECISION[3] NOT NULL,
     is_reference    BOOLEAN             NOT NULL,
-    trial_id        INTEGER REFERENCES  haptic.trial(id) ON DELETE CASCADE
+    device          "Device"            NOT NULL,
+    master_update   BOOLEAN             NOT NULL,
+    slave_update    BOOLEAN             NOT NULL
 );
+SELECT create_hypertable('haptic.state', 'time');
 
-SELECT create_hypertable('haptic.msg_s2m', 'time');
-CREATE INDEX ON haptic.msg_s2m (device, trial_id, time DESC);
+CREATE TABLE haptic.target_position (
+    time            TIMESTAMPTZ         NOT NULL,
+    pos             DOUBLE PRECISION[3] NOT NULL
+);
+SELECT create_hypertable('haptic.target_position', 'time');
 """
 
 priviledges = """

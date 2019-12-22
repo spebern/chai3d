@@ -1,25 +1,29 @@
 #include "Slave.h"
 #include "Config.h"
+#include "Common.h"
 
 void Slave::spin()
 {
-	HapticMessageM2S msgM2S;
+	m_config->lock();
 	auto const controlAlgorithm = m_config->controlAlgorithm();
+	const auto isReference = m_config->isReference();
+	const auto springIndex = m_config->springIdx();
+	m_config->unlock();
+
+	HapticMessageM2S msgM2S;
 	auto const receivedNewMsg = m_network->tryReceiveM2S(msgM2S);
 
-	const auto indention = m_spring->calcIndention(m_pos);
-	const auto springForce = m_spring->updatePositionAndCalculateForce(m_pos, m_vel);
+	cVector3d springForce(0, 0, 0);
+	cVector3d springPos(0, 0,0);
+	m_spring.calcForceAndPosition(m_pos, m_vel, springForce, springPos);
+	/*
+	m_env->springPosY(springIndex, springPos.y());
+	m_env->toolTipPos(springIndex, m_pos.y());
+	*/
 
 	cVector3d vel, pos;
 	if (receivedNewMsg)
 	{
-		if constexpr (SAVE_MSG_STREAM_TO_DB)
-		{
-			const auto dbMsg = hapticMessageM2StoDbMsg(msgM2S);
-			const auto isReference = m_config->isReference();
-			db_insert_haptic_message_m2s(m_db, Device::Slave, isReference, dbMsg);
-		}
-
 		m_posRef = msgM2S.pos;
 		switch (controlAlgorithm)
 		{
@@ -50,11 +54,10 @@ void Slave::spin()
 	m_prevPos = m_pos;
 	m_pos += m_vel * DT;
 
-	updateToolTipPos();
-
 	HapticMessageS2M msgS2M;
 	msgS2M.sequenceNumber = m_sequenceNumber;
 	m_sequenceNumber++;
+	msgS2M.pos = m_pos;
 
 	switch (controlAlgorithm)
 	{
@@ -82,17 +85,21 @@ void Slave::spin()
 		break;
 	}
 
-	const auto transmit = DEADBAND_ACTIVE && m_deadbandDetector.inDeadband(springForce);
+	const auto transmit = DEADBAND_ACTIVE ? !m_deadbandDetector.inDeadband(springForce) : true;
 	if (transmit && !m_packetRateLimiter.limited())
 		m_network->sendS2M(msgS2M);
 
-	if constexpr (SAVE_MSG_STREAM_TO_DB)
-	{
-		const auto dbMsg = hapticMessageS2MtoDbMsg(msgS2M);
-		const auto isReference = m_config->isReference();
-		db_insert_haptic_message_s2m(m_db, Device::Slave, isReference, dbMsg);
+	if constexpr (SAVE_MSG_STREAM_TO_DB) {
+		State state;
+		for (auto i = 0; i < 3; i++)
+		{
+			state.pos[i] = m_pos.get(i);
+			state.vel[i] = m_vel.get(i);
+			state.force[i] = springForce.get(i);
+		}
+		state.slaveUpdate = transmit;
+		state.masterUpdate = receivedNewMsg;
+		state.device = Device::Slave;
+		db_insert_haptic_state(m_db, isReference, state);
 	}
-
-	if (!m_packetRateLimiter.limited())
-		m_network->sendS2M(msgS2M);
 }

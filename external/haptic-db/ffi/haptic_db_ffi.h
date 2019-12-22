@@ -29,51 +29,42 @@ enum class Handedness : uint8_t {
   Left,
 };
 
-struct DB;
-
-struct Trial {
-  int32_t id;
-  int32_t packetRate;
-  int32_t delay;
-  int32_t sessionId;
-  ControlAlgorithm controlAlgo;
-  int32_t rating;
+enum class OptimisationParameter : uint8_t {
+  PacketRate,
+  Delay,
 };
+
+struct DB;
 
 struct State {
   double vel[3];
   double pos[3];
   double force[3];
   Device device;
+  bool masterUpdate;
+  bool slaveUpdate;
 };
 
 extern "C" {
 
-Trial db_current_trial(DB *db);
-
 void db_free(DB *db);
 
-void db_insert_haptic_state(DB *db, uint64_t now, bool isReference, State state);
+void db_insert_haptic_state(DB *db, bool isReference, State state);
 
-DB *db_new();
+void db_insert_rating(DB *db,
+                      ControlAlgorithm controlAlgorithm,
+                      int32_t packetRate,
+                      int32_t delay,
+                      OptimisationParameter optimisationParameter,
+                      int32_t rating);
+
+DB *db_new(uint8_t numStateWriterThreads);
 
 void db_new_session(DB *db,
                     const char *nickname,
                     int32_t age,
                     Gender gender,
-                    Handedness handedness,
-                    const int32_t *packetRatesData,
-                    size_t packetRatesSize,
-                    const int32_t *delaysData,
-                    size_t delaysSize,
-                    const ControlAlgorithm *controlAlgosData,
-                    size_t controlAlgosSize);
-
-bool db_next_trial(DB *db);
-
-void db_rate_trial(DB *db, int32_t rating);
-
-void db_save_jnd(DB *db, ControlAlgorithm controlAlgo, int32_t packetRate);
+                    Handedness handedness);
 
 } // extern "C"
 

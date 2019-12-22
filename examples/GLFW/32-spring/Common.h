@@ -37,3 +37,10 @@ inline std::string& trim(std::string& str, const std::string& chars = "\t\n\v\f\
 {
 	return ltrim(rtrim(str, chars), chars);
 }
+
+inline uint64_t nowMicros()
+{
+	const auto now = std::chrono::system_clock::now();
+	const auto micros = std::chrono::duration_cast<std::chrono::microseconds>(now.time_since_epoch()).count();
+	return micros;
+}

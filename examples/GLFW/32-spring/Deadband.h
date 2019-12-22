@@ -22,8 +22,8 @@ public:
 		if (abs(diff.length()) / abs(m_previousValue.length()) > m_threshold)
 		{
 			m_previousValue = value;
-			return true;
+			return false;
 		}
-		return false;
+		return true;
 	}
 };

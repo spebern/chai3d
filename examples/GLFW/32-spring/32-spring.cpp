@@ -1,20 +1,17 @@
-#include <boost/asio.hpp>
+#include <random>
 #include "chai3d.h"
 #include <GLFW/glfw3.h>
 #include "Network.h"
-#include "Spring.h"
 #include "Master.h"
 #include "Slave.h"
 #include "chrono"
 #include "Config.h"
-#include "array"
-#include "ToolTip.h"
 #include "haptic_db_ffi.h"
 #include "vector"
-#include "TrialController.h"
-#include "JNDTrialController.h"
+#include "CompareController.h"
 #include "Controller.h"
 #include "thread"
+#include "Environment.h"
 
 
 using namespace chai3d;
@@ -48,15 +45,6 @@ bool mirroredDisplay = false;
 #define KEY_LEFT  263
 #define KEY_RIGHT 262
 
-// a world that contains all objects of the virtual environment
-cWorld* world;
-
-// a camera to render the world in the window display
-cCamera* camera;
-
-// a light source to illuminate the objects in the world
-cPositionalLight* light;
-
 // a haptic device handler
 cHapticDeviceHandler* handler;
 
@@ -64,10 +52,7 @@ cHapticDeviceHandler* handler;
 cGenericHapticDevicePtr hapticDevice;
 
 // a flag to indicate if the haptic simulation currently running
-bool simulationRunning = false;
-
-// a flag to indicate if the haptic simulation has terminated
-bool simulationFinished = true;
+std::atomic<bool> simulationRunning = true;
 
 // haptic thread
 cThread* hapticsThread;
@@ -75,32 +60,11 @@ cThread* hapticsThread;
 // a handle to window display context
 GLFWwindow* window = nullptr;
 
-// springs the haptic device interacts with
-array<Spring*, 4> springs;
-
-// rating labels displaying the quality of the haptic feedback
-array<cLabel*, 4> ratingLabels;
-
-// labels displaying the algorithm used
-array<cLabel*, 4> algorithmLabels;
-
-// label that displays the packet rate
-cLabel* packetRateLabel;
-
-// label that displays the delay
-cLabel* delayLabel;
-
-// position of the device on the slave side
-ToolTip* toolTip;
-
 // the network model used for passing messages between master and slave
 Network* network;
 
 // the configuration of master and slave (e.g. control algorithm)
 Config* config;
-
-// a wall that fixes the spring
-cMesh* wall;
 
 // master environment interacting with a haptic device
 Master* master;
@@ -109,16 +73,19 @@ Master* master;
 DB* db;
 
 // all controllers
-array<Controller*, 2> controllers;
+vector<Controller*> controllers;
 
 // iterator for the controllers
-array<Controller*, 2>::iterator controllerIt;
+vector<Controller*>::iterator controllerIt;
 
 // the current controller
 Controller* controller;
 
 // remote environment controlled by the master
 Slave* slave;
+
+// environment containing all the animations
+Environment* env;
 
 // current width of window
 int width = 0;
@@ -145,13 +112,40 @@ void keyCallback(GLFWwindow* window, int key, int scancode, int action, int mods
 // this function renders the scene
 void updateGraphics();
 
-// this function contains the main haptics simulation loop
-void updateHaptics();
-
 // this function closes the application
 void close();
 
 cMesh* createWall();
+
+void runSlave(const std::chrono::microseconds interval)
+{
+	while (simulationRunning.load())
+	{
+		auto now = std::chrono::system_clock::now();
+		slave->spin();
+		auto d = std::chrono::system_clock::now() - now;
+		std::this_thread::sleep_for(interval - d);
+	}
+}
+
+void runMaster(const std::chrono::microseconds interval)
+{
+	// ignore the first couple of measurements
+	for (auto i = 0; i < 300; i++)
+	{
+		cVector3d ignore;
+		hapticDevice->getPosition(ignore);
+		hapticDevice->getLinearVelocity(ignore);
+	}
+
+	while (simulationRunning.load())
+	{
+		auto now = std::chrono::system_clock::now();
+		master->spin();
+		auto d = std::chrono::system_clock::now() - now;
+		std::this_thread::sleep_for(interval - d);
+	}
+}
 
 void initHapticDevice()
 {
@@ -223,102 +217,6 @@ void initOpenGL()
 #endif
 }
 
-void initWorld()
-{
-	world = new cWorld();
-
-	world->setBackgroundColor(0.5, 0.5, 0.5);
-
-	world->m_backgroundColor.setBlack();
-
-	camera = new cCamera(world);
-	world->addChild(camera);
-
-	camera->set(cVector3d(0.5, 0.0, 0.0), // camera position (eye)
-	            cVector3d(0.0, 0.0, 0.0), // look at position (target)
-	            cVector3d(0.0, 0.0, 1.0)); // direction of the (up) vector
-
-	camera->setClippingPlanes(0.01, 10.0);
-
-	camera->setStereoMode(stereoMode);
-
-	camera->setStereoEyeSeparation(0.01);
-	camera->setStereoFocalLength(0.5);
-
-	camera->setMirrorVertical(mirroredDisplay);
-
-	const auto background = new cBackground();
-	camera->m_backLayer->addChild(background);
-
-	light = new cPositionalLight(world);
-	world->addChild(light);
-	light->setEnabled(true);
-
-	cVector3d springPos(0, SPRING_Y, 0.15);
-	cVector3d ratingLabelPos(1100, 870, 0);
-	cVector3d algorithmLabelPos(900, 890, 0);
-	for (auto i = 0; i < 4; i++)
-	{
-		springs[i] = new Spring(springPos);
-		world->addChild(springs[i]->animation());
-		springPos.z(springPos.z() - 0.1);
-
-		ratingLabels[i] = new cLabel(NEW_CFONTCALIBRI28());
-		ratingLabels[i]->m_fontColor.setBlack();
-		ratingLabels[i]->setFontScale(4.0);
-		ratingLabels[i]->setLocalPos(ratingLabelPos);
-		ratingLabelPos.y(ratingLabelPos.y() - 260);
-		camera->m_frontLayer->addChild(ratingLabels[i]);
-
-		algorithmLabels[i] = new cLabel(NEW_CFONTCALIBRI16());
-		algorithmLabels[i]->m_fontColor.setBlack();
-		algorithmLabels[i]->setFontScale(4.0);
-		algorithmLabels[i]->setLocalPos(algorithmLabelPos);
-		algorithmLabelPos.y(algorithmLabelPos.y() - 260);
-		camera->m_frontLayer->addChild(algorithmLabels[i]);
-	}
-
-	packetRateLabel = new cLabel(NEW_CFONTCALIBRI28());
-	packetRateLabel->m_fontColor.setBlack();
-	packetRateLabel->setFontScale(4.0);
-	packetRateLabel->setLocalPos(900, 0, 0);
-	camera->m_frontLayer->addChild(packetRateLabel);
-
-	delayLabel = new cLabel(NEW_CFONTCALIBRI28());
-	delayLabel->m_fontColor.setBlack();
-	delayLabel->setFontScale(4.0);
-	delayLabel->setLocalPos(1300, 0, 0);
-	camera->m_frontLayer->addChild(delayLabel);
-
-	wall = createWall();
-	world->addChild(wall);
-	wall->setLocalPos(0, 0, 0);
-
-	toolTip = new ToolTip();
-	world->addChild(toolTip->animation());
-}
-
-void showSingleSpring()
-{
-	cVector3d springPos(0, -0.05, 0);
-	const cVector3d ratingLabelPos(1100, 500, 0);
-	const cVector3d algorithmLabelPos(900, 500, 0);
-
-	springs[0]->initialPos(springPos);
-	ratingLabels[0]->setLocalPos(ratingLabelPos);
-	algorithmLabels[0]->setLocalPos(algorithmLabelPos);
-
-	ratingLabels[0]->setText("");
-	algorithmLabels[0]->setText("");
-
-	for (auto i = 1; i < 4; i++)
-	{
-		springs[i]->m_animation->setShowEnabled(false, true);
-		ratingLabels[i]->setText("");
-		algorithmLabels[i]->setText("");
-	}
-}
-
 string readNickname()
 {
 	string input;
@@ -369,6 +267,9 @@ int32_t readAge()
 
 int main(int argc, char* argv[])
 {
+	// random seed
+	std::srand(std::time(nullptr));
+
 	cout << endl;
 	cout << "-----------------------------------" << endl;
 	cout << "CHAI3D" << endl;
@@ -387,39 +288,69 @@ int main(int argc, char* argv[])
 
 	const auto info = hapticDevice->getSpecifications();
 
-	db = db_new();
-
-	vector<int32_t> packetRates;
-	packetRates.push_back(15);
-	packetRates.push_back(30);
-	packetRates.push_back(40);
-	packetRates.push_back(50);
-	packetRates.push_back(60);
-	packetRates.push_back(70);
-	packetRates.push_back(90);
-	packetRates.push_back(120);
+	db = db_new(4);
 
 	const auto nickname = readNickname();
 	const auto age = readAge();
 	const auto gender = readGender();
 	const auto handedness = readHandedness();
-	db_new_session(db, nickname.c_str(), age, gender, handedness, packetRates.data(), packetRates.size());
+	db_new_session(
+		db, 
+		nickname.c_str(), 
+		age, 
+		gender, 
+		handedness
+	);
 
 	initOpenGL();
 
-	initWorld();
+	env = new Environment(width, height, db);
 
 	const std::chrono::microseconds delay(0);
 	config = new Config();
 	network = new Network(delay, 0.0);
-	master = new Master(network, hapticDevice, config, db);
-	slave = new Slave(network, springs[0], config, toolTip, db, info.m_maxLinearStiffness);
+	master = new Master(network, hapticDevice, config, db, env);
+	slave = new Slave(network, config, db,info.m_maxLinearStiffness, env);
 
-	controllers[0] = new JNDTrialController(slave, master, config, network, db, ratingLabels, springs,
-		algorithmLabels, packetRateLabel, delayLabel);
+	vector<TrialConfig> trials;
+	trials.push_back(
+		TrialConfig {
+			OptimisationParameter::Delay,
+			ControlAlgorithm::ISS,
+			0,
+			400
+		}
+	);
+	trials.push_back(
+		TrialConfig{
+			OptimisationParameter::Delay,
+			ControlAlgorithm::WAVE,
+			0,
+			400
+		}
+	);
+	trials.push_back(
+		TrialConfig{
+			OptimisationParameter::PacketRate,
+			ControlAlgorithm::ISS,
+			0,
+			0
+		}
+	);
+	trials.push_back(
+		TrialConfig{
+			OptimisationParameter::PacketRate,
+			ControlAlgorithm::WAVE,
+			0,
+			0
+		}
+	);
 
-	controllers[1] = new TrialController(slave, master, config, network, db, ratingLabels, springs,
-		algorithmLabels, packetRateLabel, delayLabel);
+	random_shuffle(trials.begin(), trials.end());
+
+	controllers.push_back(
+		new CompareController(slave, master, config, network, db, env, trials)
+	);
 
 	controllerIt = controllers.begin();
 	controller = *controllerIt;
@@ -427,8 +358,11 @@ int main(int argc, char* argv[])
 	controller->init();
 
 	// create a thread which starts the main haptics rendering loop
-	std::thread hapticsThread(updateHaptics);
-	hapticsThread.detach();
+	const auto interval = std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::milliseconds(1));
+	std::thread masterThread(runMaster, interval);
+	std::thread slaveThread(runSlave, interval);
+	slaveThread.detach();
+	masterThread.detach();
 
 	atexit(close);
 
@@ -439,7 +373,7 @@ int main(int argc, char* argv[])
 	{
 		glfwGetWindowSize(window, &width, &height);
 
-		updateGraphics();
+		env->updateGraphics();
 
 		glfwSwapBuffers(window);
 
@@ -479,7 +413,6 @@ void keyCallback(GLFWwindow* window, int key, int scancode, int action, int mods
 	case KEY_UP:
 		controller->upKey();
 		break;
-		break;
 	case 65: //  a
 	case KEY_LEFT:
 		controller->leftKey();
@@ -497,8 +430,6 @@ void keyCallback(GLFWwindow* window, int key, int scancode, int action, int mods
 			if (controllerIt == controllers.end())
 				exit(0);
 			controller = *controllerIt;
-			// TODO make nicer
-			showSingleSpring();
 			controller->init();
 		}
 		break;
@@ -524,6 +455,9 @@ void keyCallback(GLFWwindow* window, int key, int scancode, int action, int mods
 	case '5':
 		controller->rate(5);
 		break;
+	case 67: // 'c'
+		env->showTargetChallenge(config->springIdx());
+		break;
 	case 32: // space
 	{
 		const auto forceFeedback = config->forceFeedback();
@@ -538,73 +472,15 @@ void keyCallback(GLFWwindow* window, int key, int scancode, int action, int mods
 void close(void)
 {
 	// stop the simulation
-	simulationRunning = false;
+	simulationRunning.store(false);
 
 	// wait for graphics and haptics loops to terminate
-	while (!simulationFinished) { cSleepMs(100); }
+	cSleepMs(1000);
 
 	hapticDevice->close();
 
 	// delete resources
 	delete hapticsThread;
-	delete world;
 	delete handler;
 	db_free(db);
-}
-
-cMesh* createWall()
-{
-	auto wall = new cMesh();
-
-	cVector3d edges[4];
-	edges[0].set(0.00, 0.000, 0.5);
-	edges[1].set(0.03, 1.2, 0.5);
-	edges[2].set(0.03, 1.2, -0.5);
-	edges[3].set(0.03, 0.000, -0.5);
-
-	wall->newTriangle(edges[3], edges[1], edges[0]);
-	wall->newTriangle(edges[3], edges[2], edges[1]);
-
-	return wall;
-}
-
-void updateGraphics()
-{
-	world->updateShadowMaps(false, mirroredDisplay);
-
-	camera->renderView(width, height);
-
-	glFinish();
-
-	// check for any OpenGL errors
-	GLenum err;
-	err = glGetError();
-	if (err != GL_NO_ERROR) cout << "Error:  %s\n" << gluErrorString(err);
-}
-
-void updateHaptics()
-{
-	simulationRunning = true;
-	simulationFinished = false;
-
-	for (auto i = 0; i < 200; i++)
-	{
-		cVector3d ignore;
-		hapticDevice->getPosition(ignore);
-		hapticDevice->getLinearVelocity(ignore);
-	}
-
-	boost::asio::io_service io;
-	while (simulationRunning)
-	{
-		// limit to 1000Hz
-		boost::asio::deadline_timer t(io, boost::posix_time::milliseconds(1));
-
-		slave->spin();
-		master->spin();
-
-		t.wait();
-	}
-
-	simulationFinished = true;
 }

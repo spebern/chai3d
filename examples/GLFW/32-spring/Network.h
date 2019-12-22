@@ -4,7 +4,7 @@
 #include <random>;
 #include "chai3d.h"
 #include "Channel.h"
-#include "haptic_db_ffi.h"
+#include "mutex"
 
 using namespace std;
 using namespace chai3d;
@@ -20,30 +20,8 @@ struct HapticMessageS2M
 {
 	int32_t sequenceNumber;
 	cVector3d force;
+	cVector3d pos;
 };
-
-inline DBHapticMessageM2S hapticMessageM2StoDbMsg(HapticMessageM2S& msg)
-{
-	DBHapticMessageM2S dbMsg{};
-	dbMsg.sequenceNumber = msg.sequenceNumber;
-	for (auto i = 0; i < 3; i++)
-	{
-		dbMsg.pos[i] = msg.pos.get(i);
-		dbMsg.vel[i] = msg.vel.get(i);
-	}
-	return dbMsg;
-}
-
-inline DBHapticMessageS2M hapticMessageS2MtoDbMsg(HapticMessageS2M& msg)
-{
-	DBHapticMessageS2M dbMsg;
-	dbMsg.sequenceNumber = msg.sequenceNumber;
-	for (auto i = 0; i < 3; i++)
-	{
-		dbMsg.force[i] = msg.force.get(i);
-	}
-	return dbMsg;
-}
 
 class Network
 {
@@ -55,6 +33,8 @@ private:
 
 	std::default_random_engine m_generator;
 	std::normal_distribution<double> m_dist;
+
+	std::mutex m_mu;
 
 	chrono::microseconds sampleDelay() {
 		return m_delay + chrono::microseconds(static_cast<int64_t>(m_dist(m_generator)));
@@ -98,20 +78,9 @@ public:
 		m_channelS2M.clear();
 	}
 
-	void increaseDelay(const chrono::microseconds dDelay)
-	{
-		const auto newDelay = min(chrono::microseconds(200000), m_delay + dDelay);
-		delay(newDelay);
-	}
-
-	void decreaseDelay(const chrono::microseconds dDelay)
-	{
-		const auto newDelay = max(chrono::microseconds(0), m_delay - dDelay);
-		delay(newDelay);
-	}
-
 	void delay(const chrono::microseconds delay)
 	{
+		std::unique_lock<std::mutex> lock(m_mu);
 		m_delay = delay;
 		const normal_distribution<double> dist(
 			0.0, 
@@ -120,8 +89,9 @@ public:
 		m_dist = dist;
 	}
 
-	chrono::microseconds delay() const
+	chrono::microseconds delay() 
 	{
+		std::unique_lock<std::mutex> lock(m_mu);
 		return m_delay;
 	}
 };

@@ -15,83 +15,30 @@ private:
 
 	cVector3d m_initialPos;
 public:
-	cShapeBox* m_animation;
-
-	explicit Spring(const cVector3d pos)
+	explicit Spring()
 		: m_k(SPRING_K)
-		, m_length(0.3)
-		, m_width(0.05)
-		, m_animation(nullptr)
-		, m_initialPos(pos)
+		, m_length(SPRING_LENGTH)
+		, m_width(SPRING_WIDTH)
+		, m_initialPos(0, SPRING_Y, 0)
 	{
-		m_animation = new cShapeBox(0.0, m_length, m_width);
-		m_animation->m_material->setWhite();
-		m_animation->setLocalPos(pos);
-	}
-
-	~Spring()
-	{
-		delete m_animation;
 	}
 
 	double calcIndention(cVector3d& pos) const
 	{
-		return max(0.0, pos.y() - m_initialPos.y());
+		return max(0.0, pos.y() - m_initialPos.y());	
 	}
 
-	cVector3d updatePositionAndCalculateForce(cVector3d& pos, cVector3d& vel) const
+	void calcForceAndPosition(cVector3d& pos, cVector3d& vel, cVector3d& springForce, cVector3d& springPos) const
 	{
 		const auto indention = calcIndention(pos);
 		if (indention < 0.00)
 		{
-			m_animation->setLocalPos(m_initialPos);
-			return cVector3d(0, 0, 0);
+			springPos = m_initialPos;
+			springForce = cVector3d(0, 0, 0);
+			return;
 		}
-		auto newPos = m_initialPos;
-		newPos.y(m_initialPos.y() + indention);
-		m_animation->setLocalPos(newPos);
-		//const auto force = m_k * pow(indention, 1.5) + vel.y() * pow(indention, 1.5) * 0.5;
-		const auto force = m_k * indention;
-		return cVector3d(0, -force, 0);
-	}
-
-	cShapeBox* animation() const
-	{
-		return m_animation;
-	}
-
-	bool indented() const
-	{
-		return !m_animation->getLocalPos().y() == 0.0;
-	}
-
-	cVector3d pos() const
-	{
-		return m_animation->getLocalPos();
-	}
-
-	double length() const
-	{
-		return m_length;
-	}
-
-	double width() const
-	{
-		return m_width;
-	}
-
-	void markReference() const
-	{
-		m_animation->m_material->setRed();
-	}
-
-	void unmarkReference() const
-	{
-		m_animation->m_material->setWhite();
-	}
-
-	void initialPos(cVector3d& pos)
-	{
-		m_initialPos = pos;
+		springPos = m_initialPos;
+		springPos.y(m_initialPos.y() + indention);
+		springForce = cVector3d(0, -m_k * pow(indention, 1.5) + vel.y() * pow(indention, 1.5) * 0.5, 0);
 	}
 };
